@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { useSignIn } from 'react-auth-kit'
 import useApi from '../hooks/useApi'
 import ErrorsContext from '../ErrorsContext'
 import { useNavigate } from 'react-router-dom'
@@ -24,12 +23,13 @@ export default function SignUp() {
 
     const navigate = useNavigate()
 
-    const signIn = useSignIn()
-
     useEffect( ()=> {
-        console.log(response)
         if (error.length === 0 && response !== ""){
-            navigate("login")
+            var data = {
+                'username': username,
+                'password': password}
+
+            navigate("/login", {state: data})
         }
     }, [response])
 
@@ -44,19 +44,17 @@ export default function SignUp() {
     function signup(event) {
         event.preventDefault()
 
-        validateInput()
-        
-        // if (validate(email)) {
-        //     var payload = {
-        //         'username': username,
-        //         'password': password,
-        //         'email': email
-        //     };
+        if (validateInput()) {
+            var payload = {
+                'username': username,
+                'password': password,
+                'email': email.toLowerCase()
+            };
     
-        //     apiPost(`users/`, payload).then( response => {
-        //         setResponse(response)
-        //     })
-        // }
+            apiPost(`v1/users`, payload).then( response => {
+                setResponse(response)
+            })
+        }
     }
 
     function validateInput() {
@@ -75,15 +73,14 @@ export default function SignUp() {
             valid = false
         }
 
-        if (password !== "") {
-            if (!validator.isStrongPassword(password, {
-                    minLength: 7, 
-                    minLowerCase: 1,
-                    minUppercase: 1, 
-                    minNumbers:1, 
-                    minSybols: 1})) {
-                        setPasswordError("Password Must Obey Rules")
-                    }
+        if (!validator.isStrongPassword(password, {
+                minLength: 7, 
+                minLowerCase: 1,
+                minUppercase: 1, 
+                minNumbers:1, 
+                minSybols: 1})) {
+                    setPasswordError("Password Must Obey Rules")
+                    valid = false
         }
 
         if (username !== "") {
@@ -146,10 +143,12 @@ export default function SignUp() {
                             </div>
                         </div>
                     </div>
-                    {error && error.length !== 0 ?
-                        <> <button className={styles.login_form_button}>Try Again</button> </>: 
-                           <> <button className={styles.login_form_button}>Login</button> </>
-                    }
+                    <button className={styles.login_form_button}>Login</button>
+                    <div className='relative'>
+                        {error && error.length !== 0 ?
+                            <p className='text-xs text-center text-red-600'>{error}</p>: null
+                        }
+                    </div>
                 </form>
             </div>
         </div>

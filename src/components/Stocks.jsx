@@ -26,11 +26,11 @@ export default function Stocks() {
         
         var payload = {
             'limit': 108,
-            'offset': 0,
+            'offset': 108,
             'search': stock
         };
 
-        apiGet(`stock_data/`, payload).then( response => {
+        apiGet(`v1/stock_data`, payload).then( response => {
             setResponse(response)
         })
     }

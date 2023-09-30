@@ -22,7 +22,8 @@ export const apiCall = async (method, token, setError, endpoint, _params={})=> {
           isPost = method === 'post',
           isPut = method === 'put',
           isDelete = method === 'delete',
-          login = endpoint === 'login'
+          login = endpoint === 'v1/login',
+          signup = endpoint === 'v1/users'
 
     setError([])
 
@@ -30,6 +31,41 @@ export const apiCall = async (method, token, setError, endpoint, _params={})=> {
         const body = URIEncodeBody(params)
         const url = `${appConfig.apiUri}/${endpoint}`
         const headers = { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }
+
+        try {
+            const response = await fetch(url, {method, headers, body})
+
+            if (response.status >= 200 && response.status < 300) {
+                try {
+                    const response_json = await response.json()
+                    return response_json
+                }catch(e) {
+                    setError(e)
+                    console.log(e)
+                }
+            }
+            if (response.status === 403) {
+                try {
+                    const response_json = await response.json()
+                    setError(response_json.detail)
+                    return response_json
+                }catch(e) {
+                    setError(e)
+                    console.log(e)
+                }
+            }
+        } catch (e) {
+            console.log('>>>>>> Caught ERROR', e)
+            setError(e)
+            throw e
+        }
+       
+    }
+
+    if (isPost && signup) {
+        const body = JSON.stringify(params)
+        const url = `${appConfig.apiUri}/${endpoint}`
+        const headers = { 'Content-Type': 'application/json' }
 
         try {
             const response = await fetch(url, {method, headers, body})

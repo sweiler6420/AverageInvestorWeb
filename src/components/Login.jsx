@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react'
 import { useSignIn } from 'react-auth-kit'
 import useApi from '../hooks/useApi'
 import ErrorsContext from '../ErrorsContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import loginImg from '../assets/loginImg2.jpg'
 import styles from './Login.styles'
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons'
@@ -16,11 +16,12 @@ export default function Login() {
     const [response, setResponse] = useState("")
 
     const navigate = useNavigate()
+    const location = useLocation()
+    const data = location.state
 
     const signIn = useSignIn()
 
     useEffect( ()=> {
-        console.log(response)
         if (error.length === 0 && response !== ""){
             signIn({
                 token: response.access_token,
@@ -31,6 +32,13 @@ export default function Login() {
             navigate("stocks")
         }
     }, [response])
+
+    useEffect( ()=> {
+        if (data.length !== 0){
+            setUsername(data.username)
+            setPassword(data.password)
+        }
+    }, [data])
 
     useEffect( ()=> {
         if (error.length >= 1){
@@ -48,7 +56,7 @@ export default function Login() {
                 'password': password,
             };
     
-            apiPost(`login`, payload).then( response => {
+            apiPost(`v1/login`, payload).then( response => {
                 setResponse(response)
             })
         }
