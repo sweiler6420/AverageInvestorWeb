@@ -31,3 +31,64 @@ export default {
   login_form_submit_div: 'flex justify-between text-gray-400 py-2',
   login_form_button: 'w-full my-5 py-2 bg-teal-500 shadow-lg shadow-teal-500/20 hover:shadow-teal-500/50 text-white font-semibold rounded-lg',
 }
+
+
+// CSS
+// Tailwind CSS
+// fontSize: {
+//   sm: '0.800rem',
+//   base: '1rem',
+//   xl: '1.250rem',
+//   '2xl': '1.563rem',
+//   '3xl': '1.954rem',
+//   '4xl': '2.442rem',
+//   '5xl': '3.053rem',
+// },
+// fontFamily: {
+//   heading: 'Poppins',
+//   body: 'Poppins',
+// },
+// fontWeight: {
+//   normal: '400',
+//   bold: '700',
+// },
+
+// green
+// @layer base {
+//   :root {
+//     --text: #030104;
+//     --background: #f5f5f5;
+//     --background-accent: #EDEDED;
+//     --primary: #512169;
+//     --secondary: #e0b8f4;
+//     --accent: #085e0e;
+//   }
+//   .dark {
+//     --text: #fdfbfe;
+//     --background: #0a0a0a;
+//     --background-accent: #121212;#EDEDED
+//     --primary: #c696de;
+//     --secondary: #330b47; #5E1582
+//     --accent: #a1f7a7;
+//   }
+// },
+
+// red
+// @layer base {
+//   :root {
+//     --text: #030104;
+//     --background: #f5f5f5;
+//     --background-accent: #EDEDED;
+//     --primary: #512169;
+//     --secondary: #e0b8f4;
+//     --accent: #962727;
+//   }
+//   .dark {
+//     --text: #fdfbfe;
+//     --background: #0a0a0a;
+//     --background-accent: #121212;
+//     --primary: #c696de;
+//     --secondary: #330b47; #5E1582
+//     --accent: #d86969;
+//   }
+// },

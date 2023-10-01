@@ -34,7 +34,7 @@ export default function Login() {
     }, [response])
 
     useEffect( ()=> {
-        if (data.length !== 0){
+        if (data && data.length !== 0){
             setUsername(data.username)
             setPassword(data.password)
         }
