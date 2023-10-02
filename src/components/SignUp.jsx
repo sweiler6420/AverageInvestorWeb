@@ -100,34 +100,34 @@ export default function SignUp() {
     }
 
     return (
-        <div className={styles.login_div}>
-            <div className={styles.login_img_div}>
-                <img className={styles.login_img} src={loginImg} alt=''/>
+        <div className='grid grid-cols-1 sm:grid-cols-2 h-screen w-full'>
+            <div className='hidden sm:block'>
+                <img className='w-full h-full object-cover' src={loginImg} alt=''/>
                 <a className='absolute bottom-1 left-1 text-gray-800' href="http://www.freepik.com/free-ai-image/financial-investment-bull-market_65695918.htm#fromView=search&term=stock&page=1&position=24&track=ais_ai_generated">Image By WangXiNa</a>
             </div>
             <div className={styles.login_form_div}>
-                <form className={styles.login_form} onSubmit={signup}>
-                    <h2 className={styles.login_form_h2}> SIGN UP</h2>
-                    <div className={styles.login_form_label_input_div}>
+                <form className='bg-background-acc-color dark:bg-background-acc-color shadow shadow-primary-color max-w-[400px] w-full mx-auto p-8 rounded-lg' onSubmit={signup}>
+                    <h2 className='text-4xl text-text-color dark:text-text-color font-bold text-center'> SIGN UP</h2>
+                    <div className='flex flex-col text-text-color dark:text-text-color py-2'>
                         <div className='relative'>
                             <label> Email: </label> 
-                            {emailError !== "" ? <label className='absolute text-red-600 right-1'>{emailError}</label> : null}
+                            {emailError !== "" ? <label className='absolute text-red-acc-color dark:text-red-acc-color right-1'>{emailError}</label> : null}
                         </div>
-                        <input className={styles.login_form_input} type="text" onChange={event => setEmail(event.target.value)} value={email}/>
+                        <input className='rounded-lg bg-background-color dark:bg-background-color outline-none shadow focus:shadow-primary-color dark:focus:shadow-primary-color mt-2 p-2' type="text" onChange={event => setEmail(event.target.value)} value={email}/>
                     </div>
-                    <div className={styles.login_form_label_input_div}>
+                    <div className='flex flex-col text-text-color dark:text-text-color py-2'>
                         <div className='relative'>
                             <label> Username: </label>
-                            {usernameError !== "" ? <label className='absolute text-red-600 right-1'>{usernameError}</label> : null}
+                            {usernameError !== "" ? <label className='absolute text-red-acc-color dark:text-red-acc-color right-1'>{usernameError}</label> : null}
                         </div>
-                        <input className={styles.login_form_input} type="text" onChange={event => setUsername(event.target.value)} value={username}/>
+                        <input className='rounded-lg bg-background-color dark:bg-background-color outline-none shadow focus:shadow-primary-color dark:focus:shadow-primary-color mt-2 p-2' type="text" onChange={event => setUsername(event.target.value)} value={username}/>
                     </div>
-                    <div className='flex flex-col text-gray-400 py-2'>
+                    <div className='flex flex-col text-text-color dark:text-text-color py-2'>
                         <div className='relative'>
                             <label> Password: </label>
-                            {passwordError !== "" ? <label className='absolute text-red-600 right-1 underline' onMouseOver={() => setPasswordTT(true)} onMouseLeave={() => setPasswordTT(false)}>{passwordError}</label> : null}
-                            <Tooltip show={passwordTT} color="white" backgroundColor="#111827" arrowAlign='end' position='bottom right' moveRight='-40px' textBoxWidth='auto'>
-                                <ul listStyleType='disc'>
+                            {passwordError !== "" ? <label className='absolute text-red-acc-color dark:text-red-acc-color right-1 underline' onMouseOver={() => setPasswordTT(true)} onMouseLeave={() => setPasswordTT(false)}>{passwordError}</label> : null}
+                            <Tooltip show={passwordTT} color="white" backgroundColor="#0a0a0a" shadow="white" arrowAlign='end' position='bottom right' moveRight='-40px' textBoxWidth='auto'>
+                                <ul className='text-sm'>
                                     <li>Minimum 7 Characters</li>
                                     <li>Atleast 1 Uppercase Character</li>
                                     <li>Atleast 1 Number</li>
@@ -136,7 +136,7 @@ export default function SignUp() {
                             </Tooltip>
                         </div>
                         <div className='relative'>
-                            <input className='w-full rounded-lg bg-gray-700 mt-2 p-2 focus:border-blue-500 focus:bg-gray-800 focus:outline-black' type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password}/> 
+                            <input className='w-full rounded-lg bg-background-color dark:bg-background-color outline-none shadow focus:shadow-primary-color dark:focus:shadow-primary-color mt-2 p-2' type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password}/> 
                             <div className='absolute top-1 right-1'>
                                 {visible ? <EyeOutlined onClick={() => setVisible(false)} className='p-4'/> : 
                                     <EyeInvisibleOutlined onClick={() => setVisible(true)} className='p-4'/>}
@@ -146,7 +146,7 @@ export default function SignUp() {
                     <button className={styles.login_form_button}>Login</button>
                     <div className='relative'>
                         {error && error.length !== 0 ?
-                            <p className='text-xs text-center text-red-600'>{error}</p>: null
+                            <p className='text-xs text-center text-red-acc-color dark:text-red-acc-color'>{error}</p>: null
                         }
                     </div>
                 </form>
