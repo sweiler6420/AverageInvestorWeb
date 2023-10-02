@@ -1,8 +1,8 @@
-import { ConsoleSqlOutlined } from "@ant-design/icons";
-import { useState, useEffect } from "react";
+import { useContext, useEffect } from "react"
+import ThemeContext from '../ThemeContext'
  
-export default function useDarkSide() {
-    const [theme, setTheme] = useState(localStorage.theme);
+export default function useDarkMode() {
+    const { theme, setTheme } = useContext(ThemeContext)
     const colorTheme = theme === "dark" ? "light" : "dark";
  
     useEffect(() => {

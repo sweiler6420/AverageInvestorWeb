@@ -1,26 +1,26 @@
 import { useState } from "react";
-import { DarkModeSwitch } from "react-toggle-dark-mode";
+import { SunIcon, MoonIcon } from '@heroicons/react/24/outline'
 import useDarkMode from "../../hooks/useDarkMode";
+import ThemeContext from '../../ThemeContext'
  
 export default function Switcher() {
     const [colorTheme, setTheme] = useDarkMode();
-    const [darkMode, setDarkMode] = useState(
-        colorTheme === "light" ? true : false
-    );
+    const [darkMode, setDarkMode] = useState(colorTheme === "light" ? true : false);
  
-    const toggleDarkMode = (checked) => {
-        setTheme(colorTheme);
-        setDarkMode(checked);
+    const toggleDarkMode = () => {
+        if (colorTheme === "light"){
+            setDarkMode(false)
+        }else{
+            setDarkMode(true)
+        }
+
+        setTheme(colorTheme)
     };
  
     return (
-        <>
-            <DarkModeSwitch
-                style={{ marginBottom: "2rem" }}
-                checked={darkMode}
-                onChange={toggleDarkMode}
-                size={30}
-            />
-        </>
+        <div>
+            {darkMode ? <SunIcon onClick={() => toggleDarkMode()} className='h-12 w-6 text-primary-color' aria-hidden='true' /> : 
+                <MoonIcon onClick={() => toggleDarkMode()} className='h-12 w-6 text-primary-color' aria-hidden='true' />}
+        </div>
     );
 }

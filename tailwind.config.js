@@ -41,7 +41,8 @@ module.exports = {
         'red-acc-color': 'var(--r-accent-color)',
        },
       boxShadow: {
-        DEFAULT: '0 0 5px 0px rgba(0, 0, 0, 0.1)',
+        inner: 'inset 0 0 4px 0 rgb(0 0 0 / 0.1)',
+        DEFAULT: '0 0 5px 0px rgba(0, 0, 0, 0.1)'
       }
     },
   },
