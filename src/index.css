@@ -2,25 +2,171 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
+/* @layer base {
   :root {
-    --text-color: #030104;
-    --r-text-color: #fdfbfe;
-    --background-color: #f5f5f5;
-    --background-accent-color: #E9E9E9;
-    --primary-color: #512169;
-    --secondary-color: #e0b8f4;
-    --g-accent-color: #085e0e;
-    --r-accent-color: #962727;
+    --text: #030104;
+    --r-text: #fdfbfe;
+    --background: #f5f5f5;
+    --background-accent: #E9E9E9;
+    --primary: #512169;
+    --secondary: #e0b8f4;
+    --g-accent: #085e0e;
+    --r-accent: #962727;
   }
   .dark {
-    --text-color: #fdfbfe;
-    --r-text-color: #030104;
-    --background-color: #0a0a0a;
-    --background-accent-color: #121212;
-    --primary-color: #c696de;
-    --secondary-color: #330b47;
-    --g-accent-color: #a1f7a7;
-    --r-accent-color: #d86969;
+    --text: #fdfbfe;
+    --r-text: #030104;
+    --background: #0a0a0a;
+    --background-accent: #121212;
+    --primary: #c696de;
+    --secondary: #330b47;
+    --g-accent: #a1f7a7;
+    --r-accent: #d86969;
+  }
+} */
+
+
+/* @layer base {
+  :root {
+    --text: #030104;
+    --r-text: #fdfbfe;
+    --background: #ECFDFD;
+    --background-accent: #E9E9E9;
+    --primary: #14BAB0;
+    --secondary: #8AE1DE;
+    --g-accent: #085e0e;
+    --r-accent: #962727;
+  }
+  .dark {
+    --text: #fdfbfe;
+    --r-text: #030104;
+    --background: #000000;
+    --background-accent: #121212;
+    --primary: #00D6CB;
+    --secondary: #084441;
+    --g-accent: #a1f7a7;
+    --r-accent: #d86969;
+  }
+} */
+
+
+/* @layer base {
+  :root {
+    --text: #030104;
+    --r-text: #fdfbfe;
+    --background: #E2DFD5;
+    --background-accent: #E2DFD5;
+    --primary: #F9BC06;
+    --secondary: #8A7F60;
+    --g-accent: #085e0e;
+    --r-accent: #962727;
+  }
+  .dark {
+    --text: #fdfbfe;
+    --r-text: #030104;
+    --background: #0F0D0A;
+    --background-accent: #2A271D;
+    --primary: #F9BC06;
+    --secondary: #DACFAD;
+    --g-accent: #a1f7a7;
+    --r-accent: #d86969;
+  }
+} */
+
+/* @layer base {
+  :root {
+    --text: #030104;
+    --r-text: #fdfbfe;
+    --background: #DCECEF;
+    --background-accent: #DCECEF;
+    --primary: #06D4F9;
+    --secondary: #1F8FA5;
+    --g-accent: #085e0e;
+    --r-accent: #962727;
+  }
+  .dark {
+    --text: #fdfbfe;
+    --r-text: #030104;
+    --background: #000000;
+    --background-accent: #102023;
+    --primary: #06D4F9;
+    --secondary: #4FA1B0;
+    --g-accent: #a1f7a7;
+    --r-accent: #d86969;
+  }
+} */
+
+/* @layer base {
+  :root {
+    --text: #030104;
+    --r-text: #fdfbfe;
+    --background: #E0E2EB;
+    --background-accent: #E0E2EB;
+    --primary: #062BF9;
+    --secondary: #656D9A;
+    --g-accent: #085e0e;
+    --r-accent: #962727;
+  }
+  .dark {
+    --text: #fdfbfe;
+    --r-text: #030104;
+    --background: #000000;
+    --background-accent: #14161F;
+    --primary: #3855FB;
+    --secondary: #656D9A;
+    --g-accent: #a1f7a7;
+    --r-accent: #d86969;
+  }
+} */
+
+
+/* @layer base {
+  :root {
+    --text: #030104;
+    --r-text: #fdfbfe;
+    --background: #EEEEED;
+    --background-accent: #D9DAD8;
+    --primary: #21E817;
+    --secondary: #707570;
+    --g-accent: #085e0e;
+    --r-accent: #962727;
+  }
+  .dark {
+    --text: #fdfbfe;
+    --r-text: #030104;
+    --background: #121211;
+    --background-accent: #262725;
+    --primary: #23E817;
+    --secondary: #8A8F8A;
+    --g-accent: #a1f7a7;
+    --r-accent: #d86969;
+  }
+} */
+
+
+/*https://www.realtimecolors.com/dashboard?colors=000000-ffffff-00a6a9-DDDDDD-a5a5a5&fonts=Poppins-Poppins
+https://www.realtimecolors.com/dashboard?colors=ffffff-000000-57fcff-212121-595959&fonts=Poppins-Poppins*/
+@layer base {
+  :root {
+    --text: #000000;
+    --r-text: #FFFFFF;
+    --background: #FFFFFF;
+    --background-sub: #EEEEEE;
+    --background-sub-2: #DDDDDD;
+    --primary: #00A6A9;
+    --secondary: #A5A5A5;
+    --g-accent: #085e0e;
+    --r-accent: #962727;
+  }
+  .dark {
+    --text: #FFFFFF;
+    --r-text: #000000;
+    --background: #000000;
+    --background-sub: #111111;
+    --background-sub-2: #222222;
+    --primary: #57FCFF;
+    --secondary: #858A85;
+    --g-accent: #a1f7a7;
+    --r-accent: #d86969;
   }
 }

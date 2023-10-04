@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline'
 import useDarkMode from "../../hooks/useDarkMode";
-import ThemeContext from '../../ThemeContext'
  
 export default function Switcher() {
     const [colorTheme, setTheme] = useDarkMode();
@@ -19,8 +18,8 @@ export default function Switcher() {
  
     return (
         <div>
-            {darkMode ? <SunIcon onClick={() => toggleDarkMode()} className='h-12 w-6 text-primary-color' aria-hidden='true' /> : 
-                <MoonIcon onClick={() => toggleDarkMode()} className='h-12 w-6 text-primary-color' aria-hidden='true' />}
+            {darkMode ? <SunIcon onClick={() => toggleDarkMode()} className='h-12 w-6 text-primary' aria-hidden='true' /> : 
+                <MoonIcon onClick={() => toggleDarkMode()} className='h-12 w-6 text-primary' aria-hidden='true' />}
         </div>
     );
 }

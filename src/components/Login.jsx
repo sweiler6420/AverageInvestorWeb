@@ -5,10 +5,8 @@ import ErrorsContext from '../ErrorsContext'
 import ThemeContext from '../ThemeContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import loginImg from '../assets/loginImg2.jpg'
-import loginImg_dark from '../assets/loginImg2-dark.jpg'
-import styles from './Login.styles'
+import styles from './styles/Form.styles'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import useDarkMode from "../hooks/useDarkMode";
 
 
 export default function Login() {
@@ -77,36 +75,36 @@ export default function Login() {
         <div className='grid grid-cols-1 sm:grid-cols-2 h-screen w-full'>
             <div className='hidden sm:block'>
                 {theme === "light" ? <img className='w-full h-full object-cover' src={loginImg} alt=''/> : 
-                    <img className='w-full h-full object-cover' src={loginImg_dark} alt=''/>}
+                    <img className='w-full h-full object-cover' src={loginImg} alt=''/>}
                 <a className='absolute bottom-1 left-1 text-gray-800' href="http://www.freepik.com/free-ai-image/financial-investment-bull-market_65695918.htm#fromView=search&term=stock&page=1&position=24&track=ais_ai_generated">Image By WangXiNa</a>
             </div>
-            <div className={styles.login_form_div}>
-                <form className='bg-background-acc-color dark:bg-background-acc-color shadow-inner shadow-primary-color max-w-[400px] w-full mx-auto p-8 rounded-lg' onSubmit={signin}>
-                    <h2 className='text-4xl text-text-color dark:text-text-color font-bold text-center'> SIGN IN</h2>
-                    <div className='flex flex-col text-text-color dark:text-text-color py-2'>
+            <div className={styles.form_div}>
+                <form className={styles.form_style} onSubmit={signin}>
+                    <h2 className={styles.form_header}> SIGN IN</h2>
+                    <div className={styles.form_input_div}>
                         <label> Username: </label>
-                        <input className='rounded-lg bg-background-color dark:bg-background-color outline-none shadow focus:shadow-primary-color dark:focus:shadow-primary-color mt-2 p-2' type="text" onChange={event => setUsername(event.target.value)} value={username}/>
+                        <input className={styles.form_input} type="text" onChange={event => setUsername(event.target.value)} value={username}/>
                     </div>
-                    <div className='flex flex-col text-text-color dark:text-text-color py-2'>
+                    <div className={styles.form_input_div}>
                         <label> Password: </label>
                         <div className='relative'>
-                            <input className='w-full rounded-lg bg-background-color dark:bg-background-color outline-none shadow focus:shadow-primary-color dark:focus:shadow-primary-color mt-2 p-2 ' type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password}/> 
+                            <input className={styles.form_input} type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password}/> 
                             <div className='absolute top-1 right-1'>
-                                {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6' aria-hidden='true' /> : 
-                                    <EyeSlashIcon onClick={() => setVisible(true)} className='h-12 w-6' aria-hidden='true' />}
+                                {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6 text-primary pr-1' aria-hidden='true' /> : 
+                                    <EyeSlashIcon onClick={() => setVisible(true)} className='h-12 w-6 text-primary pr-1' aria-hidden='true' />}
                             </div>
                         </div>
                     </div>
-                    <div className='flex justify-between text-text-color dark:text-text-color py-2'>
+                    <div className='flex justify-between text-text dark:text-text py-2'>
                         <p className='flex items-center'><input className='mr-2' type='checkbox' /> Remember Me</p>
                         <p>Forgot Password</p>
                     </div>
                     {error && error.length !== 0 ?
-                        <> <button className={styles.login_form_button}>Try Again</button> </>: 
-                           <> <button className={styles.login_form_button}>Login</button> </>
+                        <> <button className={styles.form_button}>Try Again</button> </>: 
+                        <> <button className={styles.form_button}>Login</button> </>
                     }
                 </form>
-            </div>
         </div>
+    </div>
     );
 }

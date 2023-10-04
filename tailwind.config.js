@@ -31,18 +31,22 @@ module.exports = {
     
     extend: {
       colors: {
-        'text-color': 'var(--text-color)',
-        'reverse-text-color': 'var(--r-text-color)',
-        'background-color': 'var(--background-color)',
-        'background-acc-color': 'var(--background-accent-color)',
-        'primary-color': 'var(--primary-color)',
-        'secondary-color': 'var(--secondary-color)',
-        'green-acc-color': 'var(--g-accent-color)',
-        'red-acc-color': 'var(--r-accent-color)',
+        'text': 'var(--text)',
+        'reverse-text': 'var(--r-text)',
+        'background': 'var(--background)',
+        'background-sub': 'var(--background-sub)',
+        'background-sub-2': 'var(--background-sub-2)',
+        'background-acc': 'var(--background-accent)',
+        'primary': 'var(--primary)',
+        'secondary': 'var(--secondary)',
+        'green-acc': 'var(--g-accent)',
+        'red-acc': 'var(--r-accent)',
        },
       boxShadow: {
-        inner: 'inset 0 0 4px 0 rgb(0 0 0 / 0.1)',
-        DEFAULT: '0 0 5px 0px rgba(0, 0, 0, 0.1)'
+        DEFAULT: '0 0 5px 0px rgba(0, 0, 0, 0.1)',
+        lg: '0 0 2px 2px #fff, 0 0 5px #08f, 0 0 15px #08f, 0 0 30px #08f',
+        'neon-primary': '0 0 3px 2px #ffffff,0 0 5px var(--primary),0 0 10px var(--primary),0 0 25px var(--primary)',
+        'neon-primary-sm': '0 0 2px 1px #ffffff,0 0 5px var(--primary),0 0 7px var(--primary),0 0 15px var(--primary)',
       }
     },
   },
