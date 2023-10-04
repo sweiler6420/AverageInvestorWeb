@@ -1,16 +1,9 @@
-import { Fragment, useEffect } from 'react'
+import PathwayContext from '../../PathwayContext'
+import { Fragment, useContext} from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import DarkModeSwitcher from './DarkModeSwitcher'
 import { ReactComponent as Logo } from '../../assets/logo.svg'
-import { useLocation } from "react-router-dom";
-
-const navigation = [
-  { name: 'Home', href: '/', current: true },
-  { name: 'Login', href: '/login', current: false },
-  { name: 'Signup', href: '/signup', current: false },
-  { name: 'Calendar', href: '#', current: false },
-]
 
 const user = [
   { name: 'Profile', href: '#', current: false },
@@ -23,19 +16,9 @@ function classNames(...classes) {
 }
 
 export default function Header() {
-  const location = useLocation();
-  
-  useEffect(()=> {
-    for (var i=0; i < navigation.length; i++) 
-      if(navigation[i].href == location.pathname){
-        navigation[i].current = true
-      }else{
-        navigation[i].current = false
-      }
-  }, [location])
+  const { pathway } = useContext(PathwayContext)
 
   return (
-  
       <Disclosure as="nav" className="relative bg-background-sub dark:bg-background-sub outline outline-primary dark:outline-none dark:shadow-neon-primary">
         {({ open }) => (
           <>
@@ -59,7 +42,7 @@ export default function Header() {
                   </div>
                   <div className="hidden sm:ml-6 sm:block">
                     <div className="flex space-x-4">
-                      {navigation.map((item) => (
+                      {pathway.map((item) => (
                         <a
                           key={item.name}
                           href={item.href}
@@ -106,7 +89,7 @@ export default function Header() {
 
             <Disclosure.Panel className="sm:hidden">
               <div className="space-y-1 px-2 pb-3 pt-2">
-                {navigation.map((item) => (
+                {pathway.map((item) => (
                   <Disclosure.Button
                     key={item.name}
                     as="a"
