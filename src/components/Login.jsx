@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { useSignIn } from 'react-auth-kit'
+import { useIsAuthenticated, useSignIn } from 'react-auth-kit'
 import useApi from '../hooks/useApi'
 import ErrorsContext from '../ErrorsContext'
 import ThemeContext from '../ThemeContext'
@@ -13,18 +13,30 @@ export default function Login() {
     const { error } = useContext(ErrorsContext)
     const { theme } = useContext(ThemeContext)
     const { apiPost } = useApi()
-    const [username, setUsername] = useState("")
-    const [password, setPassword] = useState("")
-    const [visible, setVisible] = useState(true)
+    const [username, setUsername] = useState(localStorage.username)
+    const [password, setPassword] = useState(localStorage.pass)
+    const [visible, setVisible] = useState(false)
     const [response, setResponse] = useState("")
+    const [rememberMe, setRememberMe] = useState(localStorage.rememberMe === 'true')
 
+    const isAuthenticated = useIsAuthenticated()
     const navigate = useNavigate()
     const location = useLocation()
-    const data = location.state
+    const signUpData = location.state
 
     const signIn = useSignIn()
 
-    useEffect( ()=> {
+    useEffect(() => {
+        if(isAuthenticated()){
+            navigate("stocks")
+        }
+    }, [])
+
+    useEffect(() => {
+        localStorage.setItem('rememberMe', rememberMe)
+    }, [rememberMe])
+
+    useEffect(()=> {
         if (error.length === 0 && response !== ""){
             signIn({
                 token: response.access_token,
@@ -32,23 +44,35 @@ export default function Login() {
                 tokenType: "Bearer",
                 authState: { user_id: "test"}
             })
+            if(rememberMe){
+                localStorage.setItem('username', username)
+                localStorage.setItem('pass', password)
+            }else{
+                localStorage.setItem('username', "")
+                localStorage.setItem('pass', "")
+            }
             navigate("stocks")
         }
     }, [response])
 
-    useEffect( ()=> {
-        if (data && data.length !== 0){
-            setUsername(data.username)
-            setPassword(data.password)
+    useEffect(()=> {
+        if (signUpData && signUpData.length !== 0){
+            setUsername(signUpData.username)
+            setPassword(signUpData.password)
         }
-    }, [data])
+    }, [signUpData])
 
-    useEffect( ()=> {
+    useEffect(()=> {
         if (error.length >= 1){
             setUsername("")
             setPassword("")
         }
     }, [error])
+
+
+    function checkHandler() {
+        setRememberMe(!rememberMe)
+    }
 
     function signin(event) {
         event.preventDefault()
@@ -96,13 +120,16 @@ export default function Login() {
                         </div>
                     </div>
                     <div className='flex justify-between text-text dark:text-text py-2'>
-                        <p className='flex items-center'><input className='mr-2' type='checkbox' /> Remember Me</p>
-                        <p>Forgot Password</p>
+                        <p className='flex items-center'><input className='mr-2' type='checkbox' onChange={() => setRememberMe(!rememberMe)} checked={rememberMe}/> Remember Me</p>
+                        <p onClick={() => {navigate("recovery")}} className='hover:cursor-pointer hover:underline'>Forgot Password</p>
                     </div>
                     {error && error.length !== 0 ?
                         <> <button className={styles.form_button}>Try Again</button> </>: 
                         <> <button className={styles.form_button}>Login</button> </>
                     }
+                    <p onClick={() => {navigate("/signup")}} className='text-sm text-text dark:text-text text-center hover:cursor-pointer hover:underline'>
+                        Don't Have an Account? Sign Up Today!
+                    </p>
                 </form>
         </div>
     </div>

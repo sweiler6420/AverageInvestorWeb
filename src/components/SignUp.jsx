@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react'
+import { useIsAuthenticated } from 'react-auth-kit'
 import useApi from '../hooks/useApi'
 import ErrorsContext from '../ErrorsContext'
 import { useNavigate } from 'react-router-dom'
@@ -23,7 +24,14 @@ export default function SignUp() {
     const [visible, setVisible] = useState(true)
     const [response, setResponse] = useState("")
 
+    const isAuthenticated = useIsAuthenticated()
     const navigate = useNavigate()
+
+    useEffect(() => {
+        if(isAuthenticated()){
+            navigate("/login/stocks")
+        }
+    }, [])
 
     useEffect( ()=> {
         if (error.length === 0 && response !== ""){
