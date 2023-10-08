@@ -1,6 +1,6 @@
 import styles from "../../index.css"
 
-export default {
+const className = {
   form_div: 'bg-background \
     shadow-2xl shadow-black/90 \
     dark:bg-background \
@@ -27,3 +27,5 @@ export default {
     w-full my-5 py-2 \
     font-semibold hover:font-semibold rounded-lg',
 }
+
+export default className

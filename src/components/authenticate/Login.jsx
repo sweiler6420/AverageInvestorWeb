@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useIsAuthenticated, useSignIn } from 'react-auth-kit'
-import useApi from '../hooks/useApi'
-import ErrorsContext from '../ErrorsContext'
-import ThemeContext from '../ThemeContext'
+import useApi from '../../hooks/useApi'
+import ErrorsContext from '../../ErrorsContext'
+import ThemeContext from '../../ThemeContext'
 import { useNavigate, useLocation } from 'react-router-dom'
-import loginImg from '../assets/loginImg2.jpg'
-import styles from './styles/Form.styles'
+import loginImg from '../../assets/loginImg2.jpg'
+import styles from '../styles/Form.styles'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 

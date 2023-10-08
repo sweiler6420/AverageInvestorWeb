@@ -6,11 +6,11 @@ import ThemeContext from './ThemeContext'
 import PathwayContext from './PathwayContext'
 import { RequireAuth, useIsAuthenticated } from 'react-auth-kit'
 
-import Home from './components/Home'
-import Login from './components/Login'
-import Recovery from './components/Recovery'
-import SignUp from './components/SignUp'
-import Stocks from './components/Stocks'
+import Home from './components/home/Home'
+import Login from './components/authenticate/Login'
+import Recovery from './components/authenticate/Recovery'
+import SignUp from './components/authenticate/SignUp'
+import Chart from './components/authenticated/Chart'
 import Header from './components/header/Header';
 
 const AppContainer = styled.div`
@@ -61,7 +61,7 @@ export default function App() {
             <Route path='/login' element={<Login />}></Route>
             <Route path='/signup' element={<SignUp />}></Route>
             <Route path='/login/recovery' element={<Recovery />}></Route>
-            <Route path='/login/stocks' element={<RequireAuth loginPath='/login'><Stocks /></RequireAuth>}></Route>
+            <Route path='/login/stocks' element={<RequireAuth loginPath='/login'><Chart /></RequireAuth>}></Route>
           </Routes>
         </AppContainer>
         </PathwayContext.Provider>

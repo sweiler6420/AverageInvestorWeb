@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useIsAuthenticated } from 'react-auth-kit'
-import useApi from '../hooks/useApi'
-import ErrorsContext from '../ErrorsContext'
+import useApi from '../../hooks/useApi'
+import ErrorsContext from '../../ErrorsContext'
 import { useNavigate } from 'react-router-dom'
-import loginImg from '../assets/loginImg2.jpg'
-import styles from './styles/Form.styles'
+import loginImg from '../../assets/loginImg2.jpg'
+import styles from '../styles/Form.styles'
 import validator from 'validator'
 import Tooltip from 'react-power-tooltip'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import ThemeContext from '../ThemeContext'
+import ThemeContext from '../../ThemeContext'
 
 export default function SignUp() {
     const { error } = useContext(ErrorsContext)

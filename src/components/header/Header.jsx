@@ -41,7 +41,7 @@ export default function Header() {
     navigate("login")
   }
 
-  return (
+  return (  //fixed top-0 left-0 w-full // to force header on top
       <Disclosure as="nav" className="relative bg-background-sub dark:bg-background-sub outline outline-primary dark:outline-none dark:shadow-neon-primary">
         {({ open }) => (
           <>
