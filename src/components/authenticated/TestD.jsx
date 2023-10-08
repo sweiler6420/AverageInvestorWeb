@@ -15,6 +15,8 @@ export default function TestD({ticker}) {
     // volume: 8115]
 
     const svgRef = useRef()
+    const chartListener = useRef()
+    const ohlcTooltip = useRef()
 
     useEffect(() => {
         if(ticker) {
@@ -47,17 +49,13 @@ export default function TestD({ticker}) {
         const end_date = (data.at(-1).date)
         end_date.setDate(end_date.getDate() + 1);
 
-        // Create x scaleBand 
-            //domain: an array of dates between start and end
-            //range: pixel dimensions of the start of the data to the end
-            //padding: extra padding between bands!
-        const x = d3.scaleBand()
-            .domain(d3.utcDay.range(start_date, end_date))
-            .range([marginLeft, width - marginRight])
-            .padding(0.2);
 
-        // FILTER WEEKENDS IF NEEDED
-        // console.log(d3.utcDay.range(start_date, end_date).filter(d => d.getUTCDay() !== 0 && d.getUTCDay() !== 1))
+        // Create x ScaleTime
+            //domain: array of start date and end date
+            //range: px start and px end locations
+        const x = d3.scaleTime()
+            .domain([start_date, end_date])
+            .range([marginLeft, width - marginRight])
 
         // Create y scaleLog
             //domain: upper and lower limit of the data to scale on the y [lowest price possible, highest possible]
@@ -74,7 +72,7 @@ export default function TestD({ticker}) {
             .style('margin-top', '50')
             .style('overflow', 'visible')
 
-        // Append the axes.
+        // Append the axes
         svg.append("g")
             .attr("transform", `translate(0,${height - marginBottom})`)
             .call(d3.axisBottom(x)
@@ -103,36 +101,53 @@ export default function TestD({ticker}) {
             .join("g")
                 .attr("transform", d => `translate(${x(d.date)},0)`)
 
-        console.log(data.at(0).date)
-
         g.append("line")
             .attr("y1", d => y(d.low_price))
             .attr("y2", d => y(d.high_price));
 
+
         g.append("line")
             .attr("y1", d => y(d.open_price))
             .attr("y2", d => y(d.close_price))
-            .attr("stroke-width", x.bandwidth())
+            .attr("stroke-width", 2)
             .attr("stroke", d => d.open_price > d.close_price ? d3.schemeSet1[0]
                 : d.close_price > d.open_price ? d3.schemeSet1[2]
                 : d3.schemeSet1[8]);
 
-        // Append a title (tooltip).
+        const listeningRect = d3.select(chartListener.current)
+            .attr("width", width)
+            .attr("height", height)
+
+        listeningRect.on("mousemove", (event) => {mouseMove(event, x)})
+        // svg.on("mousedown", (event) => {console.log(event)})
+
+    }}, [data])
+
+    function mouseMove(e, x, title) {
+        // pointer returns [x,y] location!
+        const xCoord = d3.pointer(e)
+        const x0 = x.invert(xCoord[0])
+        const bisectDate = d3.bisector(d => d.date).left
+        const i = bisectDate(data, x0, 1)
+        const d0 = data[i-1]
+        const d1 = data[i]
+        const d = x0 - d0.date > d1.date - x0 ? d1 : d0
+
         const formatDate = d3.utcFormat("%B %-d, %Y");
         const formatValue = d3.format(".2f");
         const formatChange = ((f) => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
 
-        g.append("title")
-            .text(d => `${formatDate(d.date)}
-            Open: ${formatValue(d.open_price)}
-            Close: ${formatValue(d.close_price)} (${formatChange(d.open_price, d.close_price)})
-            Low: ${formatValue(d.low_price)}
-            High: ${formatValue(d.high_price)}`);
-    }}, [data])
+        d3.select(ohlcTooltip.current)
+            .html(`Date: ${formatDate(d.date)} Open: ${formatValue(d.open_price)} Close: ${formatValue(d.close_price)} High: ${formatValue(d.high_price)} Low: ${formatValue(d.low_price)} Delta: (${formatChange(d.open_price, d.close_price)})`)
+
+    }
 
     return (
         <div className='text-black block m-auto'>
-            <svg ref={svgRef}></svg>
+            <svg ref={svgRef}>
+                <rect ref={chartListener} width='100%' height='100%' fillOpacity={0}></rect>
+                <text ref={ohlcTooltip} width='100%' style={{fontSize:'12px'}}></text>
+            </svg>
         </div>
     )
 }
