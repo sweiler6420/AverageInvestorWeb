@@ -50,17 +50,17 @@ export default function TestD({ticker}) {
         end_date.setDate(end_date.getDate() + 1);
 
 
-        // Create x ScaleTime
+        // Create xScale ScaleTime
             //domain: array of start date and end date
             //range: px start and px end locations
-        const x = d3.scaleTime()
+        const xScale = d3.scaleTime()
             .domain([start_date, end_date])
             .range([marginLeft, width - marginRight])
 
-        // Create y scaleLog
+        // Create yScale scaleLog
             //domain: upper and lower limit of the data to scale on the y [lowest price possible, highest possible]
             //rangeRound: approximation of the height range to map to the domain values
-        const y = d3.scaleLog()
+        const yScale = d3.scaleLog()
             .domain([d3.min(data, d => d.low_price), d3.max(data, d => d.high_price)])
             .rangeRound([height - marginBottom, marginTop]);
 
@@ -75,7 +75,7 @@ export default function TestD({ticker}) {
         // Append the axes
         svg.append("g")
             .attr("transform", `translate(0,${height - marginBottom})`)
-            .call(d3.axisBottom(x)
+            .call(d3.axisBottom(xScale)
                 .tickValues(d3.utcMonday
                     .every(width > 720 ? 1 : 2)
                     .range(data.at(0).date, data.at(-1).date))
@@ -84,9 +84,9 @@ export default function TestD({ticker}) {
 
         svg.append("g")
             .attr("transform", `translate(${marginLeft},0)`)
-            .call(d3.axisLeft(y)
+            .call(d3.axisLeft(yScale)
                 .tickFormat(d3.format("$~f"))
-                .tickValues(d3.scaleLinear().domain(y.domain()).ticks()))
+                .tickValues(d3.scaleLinear().domain(yScale.domain()).ticks()))
             .call(g => g.selectAll(".tick line").clone()
                 .attr("stroke-opacity", 0.2)
                 .attr("x2", width - marginLeft - marginRight))
@@ -99,16 +99,16 @@ export default function TestD({ticker}) {
             .selectAll("g")
             .data(data)
             .join("g")
-                .attr("transform", d => `translate(${x(d.date)},0)`)
+                .attr("transform", d => `translate(${xScale(d.date)},0)`)
 
         g.append("line")
-            .attr("y1", d => y(d.low_price))
-            .attr("y2", d => y(d.high_price));
+            .attr("y1", d => yScale(d.low_price))
+            .attr("y2", d => yScale(d.high_price));
 
 
         g.append("line")
-            .attr("y1", d => y(d.open_price))
-            .attr("y2", d => y(d.close_price))
+            .attr("y1", d => yScale(d.open_price))
+            .attr("y2", d => yScale(d.close_price))
             .attr("stroke-width", 2)
             .attr("stroke", d => d.open_price > d.close_price ? d3.schemeSet1[0]
                 : d.close_price > d.open_price ? d3.schemeSet1[2]
@@ -118,15 +118,15 @@ export default function TestD({ticker}) {
             .attr("width", width)
             .attr("height", height)
 
-        listeningRect.on("mousemove", (event) => {mouseMove(event, x)})
+        listeningRect.on("mousemove", (event) => {mouseMove(event, xScale)})
         // svg.on("mousedown", (event) => {console.log(event)})
 
     }}, [data])
 
-    function mouseMove(e, x, title) {
+    function mouseMove(e, xScale) {
         // pointer returns [x,y] location!
         const xCoord = d3.pointer(e)
-        const x0 = x.invert(xCoord[0])
+        const x0 = xScale.invert(xCoord[0])
         const bisectDate = d3.bisector(d => d.date).left
         const i = bisectDate(data, x0, 1)
         const d0 = data[i-1]
