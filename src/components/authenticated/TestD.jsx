@@ -47,7 +47,8 @@ export default function TestD({ticker}) {
         // Declare the start and end date - 1
         const start_date = data.at(0).date
         const end_date = (data.at(-1).date)
-        end_date.setDate(end_date.getDate() + 1);
+
+        console.log([start_date, end_date])
 
 
         // Create xScale ScaleTime
