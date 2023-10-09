@@ -1,5 +1,6 @@
 import { React, useState, useRef, useEffect } from 'react'
 import * as d3 from 'd3'
+import { zoomTransform } from 'd3'
 
 export default function TestD({ticker, width, height}) {
 
@@ -24,6 +25,8 @@ export default function TestD({ticker, width, height}) {
     const marginBottom = 30;
     const marginLeft = 40;
 
+    const [ currentZoomState, setCurrentZoomState ] = useState()
+
     useEffect(() => {
         if(ticker) {
             const formatDate = d3.utcFormat("%B %-d, %Y")
@@ -40,28 +43,34 @@ export default function TestD({ticker, width, height}) {
     }, [ticker])
 
     useEffect(() => {if(data) {
-        console.log(data)
-
         // Declare the start and end date - 1
         const start_date = data.at(0).date
         const end_date = (data.at(-1).date)
 
-        console.log([start_date, end_date])
-
-
         // Create xScale ScaleTime
             //domain: array of start date and end date
             //range: px start and px end locations
-        const xScale = d3.scaleTime()
+        let xScale = d3.scaleTime()
             .domain([start_date, end_date])
-            .range([marginLeft, width - marginRight])
+            .range([0, width-marginRight-marginLeft])
+
+        if (currentZoomState) {
+            xScale = currentZoomState.rescaleX(xScale)
+        }
 
         // Create yScale scaleLog
             //domain: upper and lower limit of the data to scale on the y [lowest price possible, highest possible]
             //rangeRound: approximation of the height range to map to the domain values
-        const yScale = d3.scaleLog()
+        let yScale = d3.scaleLinear()
             .domain([d3.min(data, d => d.low_price), d3.max(data, d => d.high_price)])
             .rangeRound([height - marginBottom, marginTop]);
+
+        if (currentZoomState) {
+            yScale = currentZoomState.rescaleY(yScale)
+        }
+
+        // Cull svg object before rerender
+        d3.select(svgRef.current).selectAll("g").remove()
 
         // Create the SVG container.
         const svg = d3.select(svgRef.current)
@@ -69,30 +78,42 @@ export default function TestD({ticker, width, height}) {
             .attr('height', height)
             .style('background', '#d3d3d3')
             .style('margin-top', '50')
-            .style('overflow', 'visible')
+            // .style('overflow', 'visible')
+
+        const listeningRect = d3.select(chartListener.current)
+            .attr("width", width-marginLeft-marginRight)
+            .attr("height", height-marginBottom-marginTop)
+            .attr("stroke-width", 1)
+            .attr("stroke", "#000000")
+            .attr("fill", "none")
+
+        const clip = svg.append("clipPath")
+            .attr("id", "chart-area")
+            .append("rect")
+                .attr("width", width-marginRight-marginLeft)
+                .attr("height", height-marginBottom-marginTop)
 
         // Append the axes
-        svg.append("g")
+        const xAxis = svg.append("g")
             .attr("transform", `translate(0,${height - marginBottom})`)
             .call(d3.axisBottom(xScale)
-                .tickValues(d3.utcMonday
-                    .every(width > 720 ? 1 : 2)
-                    .range(data.at(0).date, data.at(-1).date))
+                .tickValues(d3.utcMonday.every(width > 720 ? 1 : 2).range(data.at(0).date, data.at(-1).date))
                 .tickFormat(d3.utcFormat("%-m/%-d")))
             .call(g => g.select(".domain").remove());
 
-        svg.append("g")
-            .attr("transform", `translate(${marginLeft},0)`)
-            .call(d3.axisLeft(yScale)
+        const yAxis = svg.append("g")
+            .attr("transform", `translate(${width - marginLeft},0)`)
+            .call(d3.axisRight(yScale)
                 .tickFormat(d3.format("$~f"))
                 .tickValues(d3.scaleLinear().domain(yScale.domain()).ticks()))
             .call(g => g.selectAll(".tick line").clone()
-                .attr("stroke-opacity", 0.2)
+                .attr("stroke-opacity", 0)
                 .attr("x2", width - marginLeft - marginRight))
             .call(g => g.select(".domain").remove());
 
         // Create a group for each day of data, and append two lines to it.
         const g = svg.append("g")
+            .attr("clip-path", "url(#chart-area)")
             .attr("stroke-linecap", "round")
             .attr("stroke", "black")
             .selectAll("g")
@@ -113,40 +134,55 @@ export default function TestD({ticker, width, height}) {
                 : d.close_price > d.open_price ? d3.schemeSet1[2]
                 : d3.schemeSet1[8]);
 
-        const listeningRect = d3.select(chartListener.current)
-            .attr("width", width-marginLeft-marginRight)
-            .attr("height", height-marginBottom-marginTop)
-            .attr("transform", `translate(${marginLeft},0)`)
-
-        listeningRect.on("mousemove", (event) => {mouseMove(event, xScale)})
+        svg.on("mousemove", (event) => {mouseMove(event, xScale)})
         // svg.on("mousedown", (event) => {console.log(event)})
 
-    }}, [data])
+        //Zoom and pan behavior setup
+        const zoomBehavior = d3.zoom()
+            .scaleExtent([1, 10])
+            .translateExtent([[0,0], [width, height]])
+            .on("zoom", (event) => {zoomFx(event)})
+
+        // attach zoom function
+        svg.call(zoomBehavior)
+
+    }}, [data, currentZoomState])
+
+    function zoomFx(){
+        //select all candles that need to be rerendered
+        const zoomState = zoomTransform(svgRef.current)
+        setCurrentZoomState(zoomState)
+    }
 
     function mouseMove(e, xScale) {
         // pointer returns [x,y] location!
         const xCoord = d3.pointer(e)[0]
-        const x0 = xScale.invert(xCoord+marginLeft)
+        const x0 = xScale.invert(xCoord)
         const bisectDate = d3.bisector(d => d.date).left
         const i = bisectDate(data, x0, 1)
         const d0 = data[i-1]
         const d1 = data[i]
-        const d = x0 - d0.date > d1.date - x0 ? d1 : d0
+        let d = d0
+        if(d1){
+            d = x0 - d0.date > d1.date - x0 ? d1 : d0
+        }
 
         const formatDate = d3.utcFormat("%B %-d, %Y");
         const formatValue = d3.format(".2f");
         const formatChange = ((f) => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
 
         d3.select(ohlcTooltip.current)
+            .attr("width", width-marginLeft-marginRight)
+            .attr("height", 15)
+            .attr("transform", `translate(0,${marginTop})`)
             .html(`Date: ${formatDate(d.date)} Open: ${formatValue(d.open_price)} Close: ${formatValue(d.close_price)} High: ${formatValue(d.high_price)} Low: ${formatValue(d.low_price)} Delta: (${formatChange(d.open_price, d.close_price)})`)
-
     }
 
     return (
         <div className='text-black block m-auto'>
             <svg ref={svgRef}>
-                <rect ref={chartListener} fillOpacity={0}></rect>
-                <text ref={ohlcTooltip} width='100%' style={{fontSize:'12px'}}></text>
+                <rect ref={chartListener}></rect>
+                <text ref={ohlcTooltip} fontSize={"10px"}></text>
             </svg>
         </div>
     )
