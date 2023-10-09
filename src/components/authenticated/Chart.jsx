@@ -37,7 +37,7 @@ export default function Chart() {
         </form>
         <p>{error}</p>
         <div className='bg-white flex flex-auto items-center'>
-            <TestD ticker={response}/> 
+            <TestD ticker={response} width={928} height={600}/> 
         </div>
     </div>
     );

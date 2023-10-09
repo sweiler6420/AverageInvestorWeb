@@ -1,7 +1,7 @@
 import { React, useState, useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 
-export default function TestD({ticker}) {
+export default function TestD({ticker, width, height}) {
 
     const [ data, setData ] = useState()
 
@@ -17,6 +17,12 @@ export default function TestD({ticker}) {
     const svgRef = useRef()
     const chartListener = useRef()
     const ohlcTooltip = useRef()
+
+    // SVG margin variables
+    const marginTop = 20;
+    const marginRight = 30;
+    const marginBottom = 30;
+    const marginLeft = 40;
 
     useEffect(() => {
         if(ticker) {
@@ -35,14 +41,6 @@ export default function TestD({ticker}) {
 
     useEffect(() => {if(data) {
         console.log(data)
-
-        // Declare the chart dimensions and margins.
-        const width = 928;
-        const height = 600;
-        const marginTop = 20;
-        const marginRight = 30;
-        const marginBottom = 30;
-        const marginLeft = 40;
 
         // Declare the start and end date - 1
         const start_date = data.at(0).date
@@ -116,8 +114,9 @@ export default function TestD({ticker}) {
                 : d3.schemeSet1[8]);
 
         const listeningRect = d3.select(chartListener.current)
-            .attr("width", width)
-            .attr("height", height)
+            .attr("width", width-marginLeft-marginRight)
+            .attr("height", height-marginBottom-marginTop)
+            .attr("transform", `translate(${marginLeft},0)`)
 
         listeningRect.on("mousemove", (event) => {mouseMove(event, xScale)})
         // svg.on("mousedown", (event) => {console.log(event)})
@@ -126,8 +125,8 @@ export default function TestD({ticker}) {
 
     function mouseMove(e, xScale) {
         // pointer returns [x,y] location!
-        const xCoord = d3.pointer(e)
-        const x0 = xScale.invert(xCoord[0])
+        const xCoord = d3.pointer(e)[0]
+        const x0 = xScale.invert(xCoord+marginLeft)
         const bisectDate = d3.bisector(d => d.date).left
         const i = bisectDate(data, x0, 1)
         const d0 = data[i-1]
@@ -146,7 +145,7 @@ export default function TestD({ticker}) {
     return (
         <div className='text-black block m-auto'>
             <svg ref={svgRef}>
-                <rect ref={chartListener} width='100%' height='100%' fillOpacity={0}></rect>
+                <rect ref={chartListener} fillOpacity={0}></rect>
                 <text ref={ohlcTooltip} width='100%' style={{fontSize:'12px'}}></text>
             </svg>
         </div>
