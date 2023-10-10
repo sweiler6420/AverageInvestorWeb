@@ -18,11 +18,17 @@ export default function TestD({ticker, width, height}) {
     const svgRef = useRef()
     const chartListener = useRef()
     const ohlcTooltip = useRef()
+    const crosshairX = useRef()
+    const crosshairY = useRef()
+    const crosshairTextX = useRef()
+    const crosshairTextY = useRef()
+
+    const padding = 2;
 
     // SVG margin variables
-    const marginTop = 20;
-    const marginRight = 30;
+    const marginTop = 30;
     const marginBottom = 30;
+    const marginRight = 40;
     const marginLeft = 40;
 
     const [ currentZoomState, setCurrentZoomState ] = useState()
@@ -52,7 +58,7 @@ export default function TestD({ticker, width, height}) {
             //range: px start and px end locations
         let xScale = d3.scaleTime()
             .domain([start_date, end_date])
-            .range([0, width-marginRight-marginLeft])
+            .range([0, width-marginRight])
 
         if (currentZoomState) {
             xScale = currentZoomState.rescaleX(xScale)
@@ -78,37 +84,36 @@ export default function TestD({ticker, width, height}) {
             .attr('height', height)
             .style('background', '#d3d3d3')
             .style('margin-top', '50')
-            // .style('overflow', 'visible')
+            .style('overflow', 'visible')
 
         const listeningRect = d3.select(chartListener.current)
-            .attr("width", width-marginLeft-marginRight)
+            .attr("width", width-marginRight)
             .attr("height", height-marginBottom-marginTop)
+            .attr("transform", `translate(0,${marginTop})`)
             .attr("stroke-width", 1)
             .attr("stroke", "#000000")
             .attr("fill", "none")
+            .attr("pointer-events", "all")
 
         const clip = svg.append("clipPath")
             .attr("id", "chart-area")
             .append("rect")
-                .attr("width", width-marginRight-marginLeft)
+                .attr("width", width-marginRight)
                 .attr("height", height-marginBottom-marginTop)
+                .attr("transform", `translate(0,${marginTop})`)
 
         // Append the axes
         const xAxis = svg.append("g")
+            .attr("id", "x-axis")
             .attr("transform", `translate(0,${height - marginBottom})`)
-            .call(d3.axisBottom(xScale)
-                .tickValues(d3.utcMonday.every(width > 720 ? 1 : 2).range(data.at(0).date, data.at(-1).date))
-                .tickFormat(d3.utcFormat("%-m/%-d")))
+            .call(d3.axisBottom(xScale))
             .call(g => g.select(".domain").remove());
 
         const yAxis = svg.append("g")
-            .attr("transform", `translate(${width - marginLeft},0)`)
+            .attr("id", "y-axis")
+            .attr("transform", `translate(${width - marginRight},0)`)
             .call(d3.axisRight(yScale)
-                .tickFormat(d3.format("$~f"))
-                .tickValues(d3.scaleLinear().domain(yScale.domain()).ticks()))
-            .call(g => g.selectAll(".tick line").clone()
-                .attr("stroke-opacity", 0)
-                .attr("x2", width - marginLeft - marginRight))
+                .tickFormat(d3.format("$~f")))
             .call(g => g.select(".domain").remove());
 
         // Create a group for each day of data, and append two lines to it.
@@ -134,7 +139,7 @@ export default function TestD({ticker, width, height}) {
                 : d.close_price > d.open_price ? d3.schemeSet1[2]
                 : d3.schemeSet1[8]);
 
-        svg.on("mousemove", (event) => {mouseMove(event, xScale)})
+        listeningRect.on("mousemove", (event) => {mouseMove(event, xScale, yScale)})
         // svg.on("mousedown", (event) => {console.log(event)})
 
         //Zoom and pan behavior setup
@@ -154,10 +159,11 @@ export default function TestD({ticker, width, height}) {
         setCurrentZoomState(zoomState)
     }
 
-    function mouseMove(e, xScale) {
+    function mouseMove(e, xScale, yScale) {
         // pointer returns [x,y] location!
-        const xCoord = d3.pointer(e)[0]
-        const x0 = xScale.invert(xCoord)
+        // gets the dataset linked to current mouse X position
+        const mCoord = d3.pointer(e)
+        const x0 = xScale.invert(mCoord[0])
         const bisectDate = d3.bisector(d => d.date).left
         const i = bisectDate(data, x0, 1)
         const d0 = data[i-1]
@@ -167,6 +173,10 @@ export default function TestD({ticker, width, height}) {
             d = x0 - d0.date > d1.date - x0 ? d1 : d0
         }
 
+        // gets the price from the mouse Y position
+        const crosshairValueY = yScale.invert(mCoord[1] + marginTop)
+        const crosshairValueX = d.date
+        
         const formatDate = d3.utcFormat("%B %-d, %Y");
         const formatValue = d3.format(".2f");
         const formatChange = ((f) => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
@@ -174,8 +184,32 @@ export default function TestD({ticker, width, height}) {
         d3.select(ohlcTooltip.current)
             .attr("width", width-marginLeft-marginRight)
             .attr("height", 15)
-            .attr("transform", `translate(0,${marginTop})`)
+            .attr("transform", `translate(0,${marginTop-padding})`)
             .html(`Date: ${formatDate(d.date)} Open: ${formatValue(d.open_price)} Close: ${formatValue(d.close_price)} High: ${formatValue(d.high_price)} Low: ${formatValue(d.low_price)} Delta: (${formatChange(d.open_price, d.close_price)})`)
+    
+        //Add Crosshair
+        d3.select(crosshairX.current)
+            .attr("x1", mCoord[0])
+            .attr("x2", mCoord[0])
+            .attr("y1", marginTop)
+            .attr("y2", height - marginBottom)
+
+        d3.select(crosshairY.current)
+            .attr("x1", 0)
+            .attr("x2", width - marginLeft)
+            .attr("y1", mCoord[1] + marginTop)
+            .attr("y2", mCoord[1] + marginTop)
+
+        //Add axis crosshair tooltips
+        d3.select(crosshairTextX.current)
+            .attr("transform", `translate(${mCoord[0]},${height-marginBottom-padding})`)
+            .html(`${formatDate(d.date)} `)
+
+        d3.select(crosshairTextY.current)
+            .attr("transform", `translate(${padding},${mCoord[1] + marginTop})`)
+            .html(`$${crosshairValueY.toFixed(2)}`)
+
+    
     }
 
     return (
@@ -183,6 +217,10 @@ export default function TestD({ticker, width, height}) {
             <svg ref={svgRef}>
                 <rect ref={chartListener}></rect>
                 <text ref={ohlcTooltip} fontSize={"10px"}></text>
+                <line ref={crosshairX} id={"crosshair-x"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block"}}></line>
+                <line ref={crosshairY} id={"crosshair-y"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block"}}></line>
+                <text ref={crosshairTextX} id={"crosshair-text-x"} fontSize={"10px"} style={{position:"absolute", padding:"5px", color:"black", border:"1px solid black", display:"block"}}></text>
+                <text ref={crosshairTextY} id={"crosshair-text-y"} fontSize={"10px"} style={{position:"absolute", padding:"5px", color:"black", border:"1px solid black", display:"block"}}></text>
             </svg>
         </div>
     )

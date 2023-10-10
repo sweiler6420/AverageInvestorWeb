@@ -13,8 +13,8 @@ export default function Login() {
     const { error } = useContext(ErrorsContext)
     const { theme } = useContext(ThemeContext)
     const { apiPost } = useApi()
-    const [username, setUsername] = useState(localStorage.username)
-    const [password, setPassword] = useState(localStorage.pass)
+    const [username, setUsername] = useState(localStorage.username !== "" ? JSON.parse(localStorage.getItem('username')) : null)
+    const [password, setPassword] = useState(localStorage.pass !== "" ? JSON.parse(localStorage.getItem('pass')) : null)
     const [visible, setVisible] = useState(false)
     const [response, setResponse] = useState("")
     const [rememberMe, setRememberMe] = useState(localStorage.rememberMe === 'true')
@@ -45,8 +45,8 @@ export default function Login() {
                 authState: { user_id: "test"}
             })
             if(rememberMe){
-                localStorage.setItem('username', username)
-                localStorage.setItem('pass', password)
+                localStorage.setItem("username", JSON.stringify(username));
+                localStorage.setItem("pass", JSON.stringify(password));
             }else{
                 localStorage.setItem('username', "")
                 localStorage.setItem('pass', "")
@@ -69,19 +69,16 @@ export default function Login() {
         }
     }, [error])
 
-
-    function checkHandler() {
-        setRememberMe(!rememberMe)
-    }
-
     function signin(event) {
         event.preventDefault()
         
-        if (validated) {
+        if (validated()) {
             var payload = {
                 'username': username,
                 'password': password,
             };
+
+            console.log(payload)
     
             apiPost(`v1/login`, payload).then( response => {
                 setResponse(response)
@@ -90,8 +87,12 @@ export default function Login() {
     }
 
     function validated() {
+        console.log(username)
+        console.log(password)
         if (username !== "" && password !== "") {
             return true
+        }else{
+            return false
         }
     }
 
