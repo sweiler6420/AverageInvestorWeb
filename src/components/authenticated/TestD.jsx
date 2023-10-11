@@ -22,6 +22,8 @@ export default function TestD({ticker, width, height}) {
     const crosshairY = useRef()
     const crosshairTextX = useRef()
     const crosshairTextY = useRef()
+    const crosshairTooltipBoxX = useRef()
+    const crosshairTooltipBoxY = useRef()
 
     const padding = 2;
 
@@ -77,6 +79,7 @@ export default function TestD({ticker, width, height}) {
 
         // Cull svg object before rerender
         d3.select(svgRef.current).selectAll("g").remove()
+        d3.select(svgRef.current).selectAll("div").remove()
 
         // Create the SVG container.
         const svg = d3.select(svgRef.current)
@@ -84,7 +87,7 @@ export default function TestD({ticker, width, height}) {
             .attr('height', height)
             .style('background', '#d3d3d3')
             .style('margin-top', '50')
-            .style('overflow', 'visible')
+            // .style('overflow', 'visible')
 
         const listeningRect = d3.select(chartListener.current)
             .attr("width", width-marginRight)
@@ -106,12 +109,14 @@ export default function TestD({ticker, width, height}) {
         const xAxis = svg.append("g")
             .attr("id", "x-axis")
             .attr("transform", `translate(0,${height - marginBottom})`)
+            .attr("pointerEvents","none")
             .call(d3.axisBottom(xScale))
             .call(g => g.select(".domain").remove());
 
         const yAxis = svg.append("g")
             .attr("id", "y-axis")
             .attr("transform", `translate(${width - marginRight},0)`)
+            .attr("pointerEvents","none")
             .call(d3.axisRight(yScale)
                 .tickFormat(d3.format("$~f")))
             .call(g => g.select(".domain").remove());
@@ -121,6 +126,7 @@ export default function TestD({ticker, width, height}) {
             .attr("clip-path", "url(#chart-area)")
             .attr("stroke-linecap", "round")
             .attr("stroke", "black")
+            .attr("pointerEvents","none")
             .selectAll("g")
             .data(data)
             .join("g")
@@ -128,12 +134,14 @@ export default function TestD({ticker, width, height}) {
 
         g.append("line")
             .attr("y1", d => yScale(d.low_price))
-            .attr("y2", d => yScale(d.high_price));
+            .attr("y2", d => yScale(d.high_price))
+            .attr("pointerEvents","none")
 
 
         g.append("line")
             .attr("y1", d => yScale(d.open_price))
             .attr("y2", d => yScale(d.close_price))
+            .attr("pointerEvents","none")
             .attr("stroke-width", 2)
             .attr("stroke", d => d.open_price > d.close_price ? d3.schemeSet1[0]
                 : d.close_price > d.open_price ? d3.schemeSet1[2]
@@ -187,40 +195,60 @@ export default function TestD({ticker, width, height}) {
             .attr("transform", `translate(0,${marginTop-padding})`)
             .html(`Date: ${formatDate(d.date)} Open: ${formatValue(d.open_price)} Close: ${formatValue(d.close_price)} High: ${formatValue(d.high_price)} Low: ${formatValue(d.low_price)} Delta: (${formatChange(d.open_price, d.close_price)})`)
     
+
+        const textXWidth = document.getElementById('crosshair-text-x').getBBox().width
+        const textYWidth = document.getElementById('crosshair-text-y').getBBox().width
+        const textXHeight = document.getElementById('crosshair-text-x').getBBox().height
+
         //Add Crosshair
         d3.select(crosshairX.current)
             .attr("x1", mCoord[0])
             .attr("x2", mCoord[0])
             .attr("y1", marginTop)
-            .attr("y2", height - marginBottom)
+            .attr("y2", height - marginBottom - textXHeight)
+            .raise()
 
         d3.select(crosshairY.current)
-            .attr("x1", 0)
+            .attr("x1", textYWidth)
             .attr("x2", width - marginLeft)
             .attr("y1", mCoord[1] + marginTop)
             .attr("y2", mCoord[1] + marginTop)
+            .raise()
 
         //Add axis crosshair tooltips
         d3.select(crosshairTextX.current)
-            .attr("transform", `translate(${mCoord[0]},${height-marginBottom-padding})`)
+            .attr("transform", `translate(${mCoord[0] - textXWidth/2},${height-marginBottom-5})`)
             .html(`${formatDate(d.date)} `)
 
         d3.select(crosshairTextY.current)
-            .attr("transform", `translate(${padding},${mCoord[1] + marginTop})`)
+            .attr("transform", `translate(${padding},${mCoord[1] + marginTop + 1})`)
             .html(`$${crosshairValueY.toFixed(2)}`)
-
     
+        d3.select(crosshairTooltipBoxX.current)
+            .attr("transform", `translate(${mCoord[0] - textXWidth/2},${height-marginTop-12})`)
+            .attr('width', textXWidth)
+            .raise()
+        
+        d3.select(crosshairTooltipBoxY.current)
+            .attr("transform", `translate(${padding},${mCoord[1] + marginTop - 6})`)
+            .attr('width', textYWidth)
+            .raise()
+
+        d3.select(crosshairTextX.current).raise()
+        d3.select(crosshairTextY.current).raise()
     }
 
     return (
         <div className='text-black block m-auto'>
-            <svg ref={svgRef}>
+            <svg ref={svgRef} style={{pointerEvents:"none"}}>
                 <rect ref={chartListener}></rect>
-                <text ref={ohlcTooltip} fontSize={"10px"}></text>
-                <line ref={crosshairX} id={"crosshair-x"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block"}}></line>
-                <line ref={crosshairY} id={"crosshair-y"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block"}}></line>
-                <text ref={crosshairTextX} id={"crosshair-text-x"} fontSize={"10px"} style={{position:"absolute", padding:"5px", color:"black", border:"1px solid black", display:"block"}}></text>
-                <text ref={crosshairTextY} id={"crosshair-text-y"} fontSize={"10px"} style={{position:"absolute", padding:"5px", color:"black", border:"1px solid black", display:"block"}}></text>
+                <text ref={ohlcTooltip} fontSize={"10px"} style={{pointerEvents:"none"}}></text>
+                <line ref={crosshairX} id={"crosshair-x"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
+                <line ref={crosshairY} id={"crosshair-y"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
+                <rect ref={crosshairTooltipBoxX} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
+                <rect ref={crosshairTooltipBoxY} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
+                <text ref={crosshairTextX} id={"crosshair-text-x"} dominant-baseline="middle" fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
+                <text ref={crosshairTextY} id={"crosshair-text-y"} dominant-baseline="middle" fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, border:"1px solid black", display:"block", pointerEvents:"none"}}></text>
             </svg>
         </div>
     )
