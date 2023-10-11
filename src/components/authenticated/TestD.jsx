@@ -28,7 +28,7 @@ export default function TestD({ticker, width, height}) {
     const padding = 2;
 
     // SVG margin variables
-    const marginTop = 30;
+    const marginTop = 15;
     const marginBottom = 30;
     const marginRight = 40;
     const marginLeft = 40;
@@ -79,7 +79,7 @@ export default function TestD({ticker, width, height}) {
 
         // Cull svg object before rerender
         d3.select(svgRef.current).selectAll("g").remove()
-        d3.select(svgRef.current).selectAll("div").remove()
+        d3.select(svgRef.current).selectAll("clipPath").remove()
 
         // Create the SVG container.
         const svg = d3.select(svgRef.current)
@@ -225,7 +225,7 @@ export default function TestD({ticker, width, height}) {
             .html(`$${crosshairValueY.toFixed(2)}`)
     
         d3.select(crosshairTooltipBoxX.current)
-            .attr("transform", `translate(${mCoord[0] - textXWidth/2},${height-marginTop-12})`)
+            .attr("transform", `translate(${mCoord[0] - textXWidth/2},${height - marginTop - 12})`)
             .attr('width', textXWidth)
             .raise()
         
@@ -245,7 +245,7 @@ export default function TestD({ticker, width, height}) {
                 <text ref={ohlcTooltip} fontSize={"10px"} style={{pointerEvents:"none"}}></text>
                 <line ref={crosshairX} id={"crosshair-x"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
                 <line ref={crosshairY} id={"crosshair-y"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
-                <rect ref={crosshairTooltipBoxX} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
+                <rect ref={crosshairTooltipBoxX} x={0} y={0} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
                 <rect ref={crosshairTooltipBoxY} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
                 <text ref={crosshairTextX} id={"crosshair-text-x"} dominant-baseline="middle" fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
                 <text ref={crosshairTextY} id={"crosshair-text-y"} dominant-baseline="middle" fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, border:"1px solid black", display:"block", pointerEvents:"none"}}></text>
