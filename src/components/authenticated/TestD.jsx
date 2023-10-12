@@ -29,9 +29,9 @@ export default function TestD({ticker, width, height}) {
 
     // SVG margin variables
     const marginTop = 15;
-    const marginBottom = 30;
-    const marginRight = 40;
-    const marginLeft = 40;
+    const marginBottom = 20;
+    const marginRight = 50;
+    const marginLeft = 0;
 
     const [ currentZoomState, setCurrentZoomState ] = useState()
 
@@ -55,12 +55,24 @@ export default function TestD({ticker, width, height}) {
         const start_date = data.at(0).date
         const end_date = (data.at(-1).date)
 
+        // Create TimeBand to calculate the bandwidth for us!
+        const xBand = d3.scaleBand()
+            .domain(d3.timeMinutes(start_date, end_date, 1440))
+            .range([marginLeft, width-marginRight])
+            .padding(0.5)    
+
+        let xBandwidth = xBand.bandwidth()
+        
+        if (currentZoomState) {
+            xBandwidth = xBand.bandwidth() * currentZoomState.k
+        }
+
         // Create xScale ScaleTime
             //domain: array of start date and end date
             //range: px start and px end locations
         let xScale = d3.scaleTime()
             .domain([start_date, end_date])
-            .range([0, width-marginRight])
+            .range([marginLeft, width-marginRight])
 
         if (currentZoomState) {
             xScale = currentZoomState.rescaleX(xScale)
@@ -87,7 +99,7 @@ export default function TestD({ticker, width, height}) {
             .attr('height', height)
             .style('background', '#d3d3d3')
             .style('margin-top', '50')
-            .style('overflow', 'visible')
+            // .style('overflow', 'visible')
 
         const listeningRect = d3.select(chartListener.current)
             .attr("width", width-marginRight)
@@ -137,49 +149,22 @@ export default function TestD({ticker, width, height}) {
             .attr("y2", d => yScale(d.high_price))
             .attr("pointerEvents","none")
 
-
-        g.append("line")
-            .attr("y1", d => yScale(d.open_price))
-            .attr("y2", d => yScale(d.close_price))
+        g.append("rect")
+            .attr("x", -xBandwidth/2)
+            .attr("y", d => d.open_price < d.close_price ? yScale(d.close_price) : yScale(d.open_price))
+            .attr("width", d => xBandwidth)
+            .attr("height", d => d.open_price < d.close_price ? yScale(d.open_price) - yScale(d.close_price) : yScale(d.close_price) - yScale(d.open_price))
             .attr("pointerEvents","none")
-            .attr("stroke-width", 2)
-            .attr("stroke", d => d.open_price > d.close_price ? d3.schemeSet1[0]
-                : d.close_price > d.open_price ? d3.schemeSet1[2]
-                : d3.schemeSet1[8]);
+            .attr("fill", d => d.open_price > d.close_price ? d3.schemeSet1[0] : d.close_price > d.open_price ? d3.schemeSet1[2] : d3.schemeSet1[8])
+            .attr("stroke", "none")
 
-
-        // const crosshairTooltipX = svg.append("g")
-        //     .attr("class", "crosshair-tooltip-x")
-        //     .attr("stroke", "black")
-        //     .attr("pointerEvents","none")
-
-        // crosshairTooltipX.append("rect")
-        //     .attr("stroke","black")
-        //     .attr("y","-12")
-        //     .attr("fill", "black")
-        //     .attr("opacity", "0.6")
-        //     .attr("rx", "3")
-        //     .attr("width","0px")
-        //     .attr("height","12px")
-        //     .attr("pointerEvents", "none")
-
-        // crosshairTooltipX.append("text")
-        //     .attr("id", "crosshair-tooltip-text-x")
-        //     .attr("y","-3")
-        //     .style("text-anchor", "middle")
-        //     .style("dominant-baseline", "auto")
-        //     .style("font-size", "10px")
-        //     .attr("fill", "white")
-        //     .attr("opacity", "0.8")
-        //     .attr("stroke", "none")
-        //     .attr("pointerEvents", "none")
 
         listeningRect.on("mousemove", (event) => {mouseMove(event, xScale, yScale)})
         // svg.on("mousedown", (event) => {console.log(event)})
 
         //Zoom and pan behavior setup
         const zoomBehavior = d3.zoom()
-            .scaleExtent([1, 10])
+            .scaleExtent([1, 20])
             .translateExtent([[0,0], [width, height]])
             .on("zoom", (event) => {zoomFx(event)})
 
@@ -227,7 +212,6 @@ export default function TestD({ticker, width, height}) {
         const textXHeight = document.getElementById('crosshair-text-x').getBBox().height
         const textYWidth = document.getElementById('crosshair-text-y').getBBox().width
         const textYHeight = document.getElementById('crosshair-text-y').getBBox().height
-        // const textXHeight = document.getElementById('crosshair-text-x').getBBox().height
 
         //Add Crosshair
         d3.select(crosshairX.current)
@@ -238,8 +222,8 @@ export default function TestD({ticker, width, height}) {
             .raise()
 
         d3.select(crosshairY.current)
-            .attr("x1", textYWidth)
-            .attr("x2", width - marginLeft)
+            .attr("x1", textYWidth - marginLeft)
+            .attr("x2", width - marginLeft - marginRight)
             .attr("y1", mCoord[1] + marginTop)
             .attr("y2", mCoord[1] + marginTop)
             .raise()
@@ -269,16 +253,6 @@ export default function TestD({ticker, width, height}) {
             .raise()
 
         d3.select(crosshairTextX.current).raise()
-
-        // d3.select(svgRef.current).select(".crosshair-tooltip-x")
-        //     .attr("transform", `translate(${mCoord[0]},${height})`)
-
-        // d3.select(svgRef.current).select(".crosshair-tooltip-x").select("rect")
-        //     .attr('width', textXWidth)
-        //     .attr("x", `${-textXWidth/2}`)
-
-        // d3.select(svgRef.current).select(".crosshair-tooltip-x").select("text")
-        //     .html(`${formatDate(d.date)}`)
             
     }
 
@@ -290,9 +264,9 @@ export default function TestD({ticker, width, height}) {
                 <line ref={crosshairX} id={"crosshair-x"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
                 <line ref={crosshairY} id={"crosshair-y"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
                 <rect ref={crosshairTooltipBoxY} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
-                <text ref={crosshairTextY} id={"crosshair-text-y"} dominant-baseline="middle" fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
+                <text ref={crosshairTextY} id={"crosshair-text-y"} dominantBaseline="middle" fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
                 <rect ref={crosshairTooltipBoxX} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
-                <text ref={crosshairTextX} id={"crosshair-text-x"} dominant-baseline="hanging" textAnchor='middle' fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
+                <text ref={crosshairTextX} id={"crosshair-text-x"} dominantBaseline="hanging" textAnchor='middle' fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
             </svg>
         </div>
     )
