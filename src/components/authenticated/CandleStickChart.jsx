@@ -1,8 +1,11 @@
 import { React, useState, useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 import { scaleTime, zoomTransform } from 'd3'
-import { scaleDiscontinuous, discontinuityRange } from '@d3fc/d3fc-discontinuous-scale'
+// import * as fc from 'd3fc'
 import { Underline } from 'react-feather'
+import { scaleDiscontinuous } from './d3fc/@d3fc/d3fc-discontinuous-scale'
+import { discontinuityProvider } from './d3fc/@d3fc/d3fc-discontinuous-scale'
+import { discontinuitySkipWeeklyPattern } from './d3fc/@d3fc/d3fc-discontinuous-scale'
 
 export default function CandleStickChart({ticker, width, height}) {
 
@@ -28,6 +31,31 @@ export default function CandleStickChart({ticker, width, height}) {
     const marginLeft = 0;
 
     const [ currentZoomState, setCurrentZoomState ] = useState()
+
+    const nonTradingHoursPattern = {
+        Monday: [
+            ['SOD', '08:30'],
+            ['17:00', 'EOD']
+        ],
+        Tuesday: [
+            ['SOD', '08:30'],
+            ['17:00', 'EOD']
+        ],
+        Wednesday: [
+            ['SOD', '08:30'],
+            ['17:00', 'EOD']
+        ],
+        Thursday: [
+            ['SOD', '08:30'],
+            ['17:00', 'EOD']
+        ],
+        Friday: [
+            ['SOD', '08:30'],
+            ['17:00', 'EOD']
+        ],
+        Saturday: [['SOD', 'EOD']],
+        Sunday: [['SOD', 'EOD']]
+    }
 
     useEffect(() => {
         if(ticker) {
@@ -60,16 +88,33 @@ export default function CandleStickChart({ticker, width, height}) {
             xBandwidth = xBand.bandwidth() * currentZoomState.k
         }
 
-        const testStart = data.at(200).date
-        const testEnd = data.at(201).date
+        // const testStart1 = data.at(200).date
+        // const testEnd1 = data.at(201).date
+
+        // const testStart2 = data.at(516).date
+        // const testEnd2 = data.at(517).date
+
+        // console.log([testStart1, testEnd1], [testStart2, testEnd2])
+
+        // console.log(discontinuityProviderOffset())
 
         // Testing
-        let xScale = scaleDiscontinuous(scaleTime())
-            .discontinuityProvider(discontinuityRange(discontinuityProviderOffset()))
+        // let xScale = scaleDiscontinuous(scaleTime())
+        //     .discontinuityProvider(discontinuitySkipWeeklyPattern(nonTradingHoursPattern))
+        //     .domain([start_date, end_date])
+        //     .range([marginLeft, width-marginRight])
+
+        // console.log(data)
+
+        let xScale = scaleDiscontinuous(d3.scaleTime())
+            .discontinuityProvider(discontinuitySkipWeeklyPattern(nonTradingHoursPattern))
             .domain([start_date, end_date])
             .range([marginLeft, width-marginRight])
 
-        console.log(xScale.discontinuityProvider().discontinuityRange)
+        console.log(xScale(data.at(125).date))
+
+        console.log(xScale.invert(200))
+
 
         if (currentZoomState) {
             xScale = currentZoomState.rescaleX(xScale)
@@ -191,6 +236,10 @@ export default function CandleStickChart({ticker, width, height}) {
         // pointer returns [x,y] location!
         // gets the dataset linked to current mouse X position
         const mCoord = d3.pointer(e)
+        if(mCoord[0] === 0){
+            mCoord[0] = 1
+        }
+        console.log(mCoord[0])
         const x0 = xScale.invert(mCoord[0])
         const bisectDate = d3.bisector(d => d.date).left
         const i = bisectDate(data, x0, 1)
@@ -266,7 +315,7 @@ export default function CandleStickChart({ticker, width, height}) {
     function discontinuityProviderOffset(){
         const formatDate = d3.utcFormat("%Y-%m-%d");
         let dates = []
-        let dateOffsets = []
+        let dateOffsets = undefined
         data.forEach((rec) => {
             let date = formatDate(new Date(rec.datetime))
             if(!dates.includes(date)){
@@ -279,10 +328,22 @@ export default function CandleStickChart({ticker, width, height}) {
             let date1 = undefined
             let date2 = undefined
             if(dates.length >= 1){
-                dateOffsets.push([
-                    new Date(dates[i].split("-")[0], dates[i].split("-")[1], dates[i].split("-")[2], 17, 5, 0, 0),
-                    new Date(dates[i+1].split("-")[0], dates[i+1].split("-")[1], dates[i+1].split("-")[2], 7, 55, 0, 0)
-                ])
+                // console.log(dateOffsets)
+                // dateOffsets.push([
+                //     new Date(dates[i].split("-")[0], dates[i].split("-")[1], dates[i].split("-")[2], 17, 5, 0, 0),
+                //     new Date(dates[i+1].split("-")[0], dates[i+1].split("-")[1], dates[i+1].split("-")[2], 7, 55, 0, 0)
+                // ])
+                if(!dateOffsets){
+                    dateOffsets = [
+                        new Date(dates[i].split("-")[0], dates[i].split("-")[1], dates[i].split("-")[2], 17, 5, 0, 0),
+                        new Date(dates[i+1].split("-")[0], dates[i+1].split("-")[1], dates[i+1].split("-")[2], 7, 55, 0, 0)
+                    ]
+                }else{
+                    dateOffsets = dateOffsets + [
+                        new Date(dates[i].split("-")[0], dates[i].split("-")[1], dates[i].split("-")[2], 17, 5, 0, 0),
+                        new Date(dates[i+1].split("-")[0], dates[i+1].split("-")[1], dates[i+1].split("-")[2], 7, 55, 0, 0)
+                    ]
+                } 
             }
         }
         console.log(dateOffsets)
