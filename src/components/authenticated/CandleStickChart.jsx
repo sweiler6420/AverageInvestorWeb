@@ -1,19 +1,13 @@
 import { React, useState, useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { zoomTransform } from 'd3'
+import { scaleTime, zoomTransform } from 'd3'
+import { scaleDiscontinuous, discontinuityRange } from '@d3fc/d3fc-discontinuous-scale'
+import { Underline } from 'react-feather'
 
-export default function TestD({ticker, width, height}) {
+export default function CandleStickChart({ticker, width, height}) {
 
     const [ data, setData ] = useState()
-
-    // [close_price: 305.18
-    // date: "2023-10-04"
-    // high_price: 305.31
-    // low_price: 305.05
-    // open_price: 305.31
-    // stock_id: "f4ba1944-a269-499c-bc2e-b99c51619de1"
-    // time: "17:00:00"
-    // volume: 8115]
+    const [ interval, setInterval ] = useState(5)
 
     const svgRef = useRef()
     const chartListener = useRef()
@@ -37,9 +31,8 @@ export default function TestD({ticker, width, height}) {
 
     useEffect(() => {
         if(ticker) {
-            const formatDate = d3.utcFormat("%B %-d, %Y")
             ticker.forEach(function(d) {
-                d.date = new Date(d.date)
+                d.date = new Date(d.datetime)
                 d.close_price = +d.close_price
                 d.open_price = +d.open_price
                 d.low_price = +d.low_price
@@ -57,7 +50,7 @@ export default function TestD({ticker, width, height}) {
 
         // Create TimeBand to calculate the bandwidth for us!
         const xBand = d3.scaleBand()
-            .domain(d3.timeMinutes(start_date, end_date, 1440))
+            .domain(d3.timeMinutes(start_date, end_date, interval)) //1440 minutes in a day
             .range([marginLeft, width-marginRight])
             .padding(0.5)    
 
@@ -67,16 +60,31 @@ export default function TestD({ticker, width, height}) {
             xBandwidth = xBand.bandwidth() * currentZoomState.k
         }
 
-        // Create xScale ScaleTime
-            //domain: array of start date and end date
-            //range: px start and px end locations
-        let xScale = d3.scaleTime()
+        const testStart = data.at(200).date
+        const testEnd = data.at(201).date
+
+        // Testing
+        let xScale = scaleDiscontinuous(scaleTime())
+            .discontinuityProvider(discontinuityRange(discontinuityProviderOffset()))
             .domain([start_date, end_date])
             .range([marginLeft, width-marginRight])
+
+        console.log(xScale.discontinuityProvider().discontinuityRange)
 
         if (currentZoomState) {
             xScale = currentZoomState.rescaleX(xScale)
         }
+
+        // Create xScale ScaleTime
+            //domain: array of start date and end date
+            //range: px start and px end locations
+        // let xScale = d3.scaleTime()
+        //     .domain([start_date, end_date])
+        //     .range([marginLeft, width-marginRight])
+
+        // if (currentZoomState) {
+        //     xScale = currentZoomState.rescaleX(xScale)
+        // }
 
         // Create yScale scaleLog
             //domain: upper and lower limit of the data to scale on the y [lowest price possible, highest possible]
@@ -197,7 +205,7 @@ export default function TestD({ticker, width, height}) {
         const crosshairValueY = yScale.invert(mCoord[1] + marginTop)
         const crosshairValueX = d.date
         
-        const formatDate = d3.utcFormat("%B %-d, %Y");
+        const formatDate = d3.utcFormat("%Y-%m-%d %I:%M");
         const formatValue = d3.format(".2f");
         const formatChange = ((f) => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
 
@@ -241,7 +249,6 @@ export default function TestD({ticker, width, height}) {
         d3.select(crosshairTextY.current).raise()
 
 
-
         d3.select(crosshairTextX.current)
             .attr("transform", `translate(${mCoord[0]},${height - marginBottom - textXHeight})`)
             .html(`${formatDate(d.date)}`)
@@ -254,6 +261,32 @@ export default function TestD({ticker, width, height}) {
 
         d3.select(crosshairTextX.current).raise()
             
+    }
+
+    function discontinuityProviderOffset(){
+        const formatDate = d3.utcFormat("%Y-%m-%d");
+        let dates = []
+        let dateOffsets = []
+        data.forEach((rec) => {
+            let date = formatDate(new Date(rec.datetime))
+            if(!dates.includes(date)){
+                dates.push(formatDate(new Date(rec.datetime)))
+            }
+        })
+
+        for (let i = 0; i < dates.length-1; i++) {
+            let tempOffset = []
+            let date1 = undefined
+            let date2 = undefined
+            if(dates.length >= 1){
+                dateOffsets.push([
+                    new Date(dates[i].split("-")[0], dates[i].split("-")[1], dates[i].split("-")[2], 17, 5, 0, 0),
+                    new Date(dates[i+1].split("-")[0], dates[i+1].split("-")[1], dates[i+1].split("-")[2], 7, 55, 0, 0)
+                ])
+            }
+        }
+        console.log(dateOffsets)
+        return dateOffsets
     }
 
     return (
