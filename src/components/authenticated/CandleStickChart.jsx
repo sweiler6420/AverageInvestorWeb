@@ -61,6 +61,9 @@ export default function CandleStickChart({ticker, width, height}) {
 
         if (currentZoomState) {
             xScale.range([marginLeft, width - marginRight].map(d => currentZoomState.applyX(d)))
+            //TODO: Going to have to create a subset of domain based on where the range gets changed too
+            //this will be the basis for our xaxis rendering
+            console.log(xScale.domain())
         }
 
         let xScalewidth = xScale.bandwidth()
@@ -87,7 +90,7 @@ export default function CandleStickChart({ticker, width, height}) {
             .attr('height', height)
             .style('background', '#d3d3d3')
             .style('margin-top', '50')
-            .style('overflow', 'visible')
+            // .style('overflow', 'visible')
 
         const listeningRect = d3.select(chartListener.current)
             .attr("width", width-marginRight)
@@ -107,6 +110,7 @@ export default function CandleStickChart({ticker, width, height}) {
 
         // Append the axes
         const xAxis =  svg.append("g")
+            .attr("class", "x-axis")
             .attr("transform", `translate(0,${height - marginBottom})`)
             .call(d3.axisBottom(xScale)
             .tickValues(xScale.domain().filter((d,i) => { return !(i%20)}))
