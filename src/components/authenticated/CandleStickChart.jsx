@@ -120,6 +120,8 @@ export default function CandleStickChart({ticker, width, height}) {
             .tickFormat(d3.utcFormat("%-H:%-M")))
             .call(g => g.select(".domain").remove());
 
+            // .tickSize(-height) to add grid
+
         const yAxis = svg.append("g")
             .attr("id", "y-axis")
             .attr("transform", `translate(${width - marginRight},0)`)
@@ -174,6 +176,8 @@ export default function CandleStickChart({ticker, width, height}) {
         const zoomState = zoomTransform(svgRef.current)
         setCurrentZoomState(zoomState)
     }
+
+    // function xAxisGenerator() { xScale.domain().filter((d,i) => { return !(i%(currentZoomState ? Math.round(30 / currentZoomState.k) : 30))})}
 
     function mouseMove(e, xScale, yScale) {
         // pointer returns [x,y] location!
