@@ -57,7 +57,7 @@ export default function CandleStickChart({ticker, width, height}) {
         const xScale = d3.scaleBand()
             .domain(dates)
             .range([marginLeft, width-marginRight])
-            .padding(0.5)
+            .paddingInner(0.3)
 
         if (currentZoomState) {
             // console.log(xScale.range())
@@ -138,7 +138,7 @@ export default function CandleStickChart({ticker, width, height}) {
             .selectAll("g")
             .data(data)
             .join("g")
-                .attr("transform", d => `translate(${xScale(d.date)},0)`)
+                .attr("transform", d => `translate(${xScale(d.date) + xScalewidth/2},0)`)
 
         g.append("line")
             .attr("y1", d => yScale(d.low_price))
