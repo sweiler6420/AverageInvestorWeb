@@ -55,15 +55,18 @@ export default function CandleStickChart({ticker, width, height}) {
 
         // Create TimeBand to calculate the bandwidth for us!
         const xScale = d3.scaleBand()
-            .domain(dates) //1440 minutes in a day
+            .domain(dates)
             .range([marginLeft, width-marginRight])
-            .padding(0.5)    
+            .padding(0.5)
 
         if (currentZoomState) {
+            // console.log(xScale.range())
             xScale.range([marginLeft, width - marginRight].map(d => currentZoomState.applyX(d)))
-            //TODO: Going to have to create a subset of domain based on where the range gets changed too
+            // console.log(xScale.range())
+            console.log(Math.round(20 / currentZoomState.k))
+            //Going to have to create a subset of domain based on where the range gets changed too
             //this will be the basis for our xaxis rendering
-            console.log(xScale.domain())
+            // console.log(xScale.domain())
         }
 
         let xScalewidth = xScale.bandwidth()
@@ -113,8 +116,8 @@ export default function CandleStickChart({ticker, width, height}) {
             .attr("class", "x-axis")
             .attr("transform", `translate(0,${height - marginBottom})`)
             .call(d3.axisBottom(xScale)
-            .tickValues(xScale.domain().filter((d,i) => { return !(i%20)}))
-            .tickFormat(d3.utcFormat("%-m/%-d")))
+            .tickValues(xScale.domain().filter((d,i) => { return !(i%(currentZoomState ? Math.round(30 / currentZoomState.k) : 30))}))
+            .tickFormat(d3.utcFormat("%-H:%-M")))
             .call(g => g.select(".domain").remove());
 
         const yAxis = svg.append("g")
