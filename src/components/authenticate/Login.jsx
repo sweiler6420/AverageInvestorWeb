@@ -7,14 +7,15 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import loginImg from '../../assets/loginImg2.jpg'
 import styles from '../styles/Form.styles'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { Underline } from 'react-feather'
 
 
 export default function Login() {
     const { error } = useContext(ErrorsContext)
     const { theme } = useContext(ThemeContext)
     const { apiPost } = useApi()
-    const [username, setUsername] = useState(localStorage.username !== "" ? JSON.parse(localStorage.getItem('username')) : null)
-    const [password, setPassword] = useState(localStorage.pass !== "" ? JSON.parse(localStorage.getItem('pass')) : null)
+    const [username, setUsername] = useState("")
+    const [password, setPassword] = useState("")
     const [visible, setVisible] = useState(false)
     const [response, setResponse] = useState("")
     const [rememberMe, setRememberMe] = useState(localStorage.rememberMe === 'true')
@@ -35,6 +36,13 @@ export default function Login() {
     useEffect(() => {
         localStorage.setItem('rememberMe', rememberMe)
     }, [rememberMe])
+
+    useEffect(() => {
+        if(rememberMe){
+            setUsername(localStorage.username !== "" ? JSON.parse(localStorage.getItem('username')) : "")
+            setPassword(localStorage.pass !== "" ? JSON.parse(localStorage.getItem('pass')) : "")
+        }
+    }, [username, password])
 
     useEffect(()=> {
         if (error.length === 0 && response !== ""){
@@ -77,8 +85,6 @@ export default function Login() {
                 'username': username,
                 'password': password,
             };
-
-            console.log(payload)
     
             apiPost(`v1/login`, payload).then( response => {
                 setResponse(response)
@@ -87,11 +93,10 @@ export default function Login() {
     }
 
     function validated() {
-        console.log(username)
-        console.log(password)
-        if (username !== "" && password !== "") {
+        if (username !== "" && username !== undefined && password !== "" && password !== undefined) {
             return true
-        }else{
+        }
+        else{
             return false
         }
     }
@@ -108,12 +113,12 @@ export default function Login() {
                     <h2 className={styles.form_header}> SIGN IN</h2>
                     <div className={styles.form_input_div}>
                         <label> Username: </label>
-                        <input className={styles.form_input} type="text" onChange={event => setUsername(event.target.value)} value={username}/>
+                        <input className={styles.form_input} type="text" onChange={event => setUsername(event.target.value)} value={username ? username : ""}/>
                     </div>
                     <div className={styles.form_input_div}>
                         <label> Password: </label>
                         <div className='relative'>
-                            <input className={styles.form_input} type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password}/> 
+                            <input className={styles.form_input} type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password ? password : ""}/> 
                             <div className='absolute top-1 right-1'>
                                 {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6 text-primary pr-1' aria-hidden='true' /> : 
                                     <EyeSlashIcon onClick={() => setVisible(true)} className='h-12 w-6 text-primary pr-1' aria-hidden='true' />}

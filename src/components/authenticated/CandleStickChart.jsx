@@ -49,9 +49,6 @@ export default function CandleStickChart({ticker, width, height}) {
     }, [ticker])
 
     useEffect(() => {if(data && dates) {
-        // Declare the start and end date - 1
-        const start_date = data.at(0)
-        const end_date = (data.at(-1))
 
         // Create TimeBand to calculate the bandwidth for us!
         const xScale = d3.scaleBand()
@@ -60,17 +57,8 @@ export default function CandleStickChart({ticker, width, height}) {
             .paddingInner(0.3)
 
         if (currentZoomState) {
-            // console.log(xScale.range())
             xScale.range([marginLeft, width - marginRight].map(d => currentZoomState.applyX(d)))
-            // console.log(xScale.range())
-            console.log(Math.round(20 / currentZoomState.k))
-            //Going to have to create a subset of domain based on where the range gets changed too
-            //this will be the basis for our xaxis rendering
-            // console.log(xScale.domain())
-        }
-
-        let xScalewidth = xScale.bandwidth()
-        
+        }        
 
         // Create yScale scaleLog
             //domain: upper and lower limit of the data to scale on the y [lowest price possible, highest possible]
@@ -104,12 +92,19 @@ export default function CandleStickChart({ticker, width, height}) {
             .attr("fill", "none")
             .attr("pointer-events", "all")
 
-        const clip = svg.append("clipPath")
+        const chartClip = svg.append("clipPath")
             .attr("id", "chart-area")
             .append("rect")
                 .attr("width", width-marginRight)
                 .attr("height", height-marginBottom-marginTop)
                 .attr("transform", `translate(0,${marginTop})`)
+
+        const axisClip = svg.append("clipPath")
+            .attr("id", "axis-area")
+            .append("rect")
+                .attr("width", 400)
+                .attr("height", marginBottom)
+                .attr("transform", `translate(0,${height - marginBottom})`)
 
         // Append the axes
         const xAxis =  svg.append("g")
@@ -140,7 +135,7 @@ export default function CandleStickChart({ticker, width, height}) {
             .selectAll("g")
             .data(data)
             .join("g")
-                .attr("transform", d => `translate(${xScale(d.date) + xScalewidth/2},0)`)
+                .attr("transform", d => `translate(${xScale(d.date) + xScale.bandwidth()/2},0)`)
 
         g.append("line")
             .attr("y1", d => yScale(d.low_price))
@@ -148,9 +143,9 @@ export default function CandleStickChart({ticker, width, height}) {
             .attr("pointerEvents","none")
 
         g.append("rect")
-            .attr("x", -xScalewidth/2)
+            .attr("x", -xScale.bandwidth()/2)
             .attr("y", d => d.open_price < d.close_price ? yScale(d.close_price) : yScale(d.open_price))
-            .attr("width", d => xScalewidth)
+            .attr("width", d => xScale.bandwidth())
             .attr("height", d => d.open_price < d.close_price ? yScale(d.open_price) - yScale(d.close_price) : yScale(d.close_price) - yScale(d.open_price))
             .attr("pointerEvents","none")
             .attr("fill", d => d.open_price > d.close_price ? d3.schemeSet1[0] : d.close_price > d.open_price ? d3.schemeSet1[2] : d3.schemeSet1[8])
@@ -183,16 +178,16 @@ export default function CandleStickChart({ticker, width, height}) {
         // pointer returns [x,y] location!
         // gets the dataset linked to current mouse X position
         const mCoord = d3.pointer(e)
-        // const x0 = xScale.invert(mCoord[0])
-        // const bisectDate = d3.bisector(d => d.date).left
-        // const i = bisectDate(data, x0, 1)
-        // const d0 = data[i-1]
-        // const d1 = data[i]
-        // let d = d0
-        // if(d1){
-        //     d = x0 - d0.date > d1.date - x0 ? d1 : d0
-        // }
-        let d = data[1]
+        const x0 = invert(mCoord[0], xScale)
+        const bisectDate = d3.bisector(d => d.date).left
+        const i = bisectDate(data, x0, 1)
+        const d0 = data[i-1]
+        const d1 = data[i]
+        let d = d0
+        if(d1){
+            d = x0 - d0.date > d1.date - x0 ? d1 : d0
+        }
+        // let d = data[1]
 
         // gets the price from the mouse Y position
         const crosshairValueY = yScale.invert(mCoord[1] + marginTop)
@@ -256,30 +251,11 @@ export default function CandleStickChart({ticker, width, height}) {
             
     }
 
-    function discontinuityProviderOffset(){
-        const formatDate = d3.utcFormat("%Y-%m-%d");
-        let dates = []
-        let dateOffsets = []
-        data.forEach((rec) => {
-            let date = formatDate(new Date(rec.datetime))
-            if(!dates.includes(date)){
-                dates.push(formatDate(new Date(rec.datetime)))
-            }
-        })
-
-        for (let i = 0; i < dates.length-1; i++) {
-            let tempOffset = []
-            let date1 = undefined
-            let date2 = undefined
-            if(dates.length >= 1){
-                dateOffsets.push([
-                    new Date(dates[i].split("-")[0], dates[i].split("-")[1], dates[i].split("-")[2], 17, 5, 0, 0),
-                    new Date(dates[i+1].split("-")[0], dates[i+1].split("-")[1], dates[i+1].split("-")[2], 7, 55, 0, 0)
-                ])
-            }
-        }
-        console.log(dateOffsets)
-        return dateOffsets
+    function invert(x, xScale) {
+        const domain = xScale.domain();
+        const range = xScale.range()
+        const scale = d3.scaleQuantize().domain(range).range(domain)
+        return scale(x)
     }
 
     return (
