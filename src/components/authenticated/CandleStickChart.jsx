@@ -1,15 +1,13 @@
 import { React, useState, useRef, useEffect } from 'react'
 import * as d3 from 'd3'
-import { scaleTime, zoomTransform } from 'd3'
-import { scaleDiscontinuous, discontinuityRange } from '@d3fc/d3fc-discontinuous-scale'
-import { Underline } from 'react-feather'
+import { zoomTransform } from 'd3'
 
 export default function CandleStickChart({ticker, width, height}) {
 
     const [ data, setData ] = useState()
     const [ interval, setInterval ] = useState(5)
     const [ dates, setDates ] = useState()
-    const [ rendered, setRendered ] = useState()
+    const [ viewportData, setViewportData ] = useState()
 
     const svgRef = useRef()
     const chartListener = useRef()
@@ -51,13 +49,17 @@ export default function CandleStickChart({ticker, width, height}) {
     useEffect(() => {if(data && dates) {
 
         // Create TimeBand to calculate the bandwidth for us!
-        const xScale = d3.scaleBand()
+        let xScale = d3.scaleBand()
             .domain(dates)
             .range([marginLeft, width-marginRight])
             .paddingInner(0.3)
 
         if (currentZoomState) {
-            xScale.range([marginLeft, width - marginRight].map(d => currentZoomState.applyX(d)))
+            // xScale.range([marginLeft, width - marginRight].map(d => currentZoomState.applyX(d)))
+            xScale = d3.scaleBand()
+                .domain(rescale())
+                .range([marginLeft, width-marginRight])
+                .paddingInner(0.3)
         }        
 
         // Create yScale scaleLog
@@ -111,8 +113,8 @@ export default function CandleStickChart({ticker, width, height}) {
             .attr("class", "x-axis")
             .attr("transform", `translate(0,${height - marginBottom})`)
             .call(d3.axisBottom(xScale)
-            .tickValues(xScale.domain().filter((d,i) => { return !(i%(currentZoomState ? Math.round(30 / currentZoomState.k) : 30))}))
-            .tickFormat(d3.utcFormat("%-H:%-M")))
+                .tickValues(xScale.domain().filter((d,i) => { return !(i%(currentZoomState ? Math.round(30 / currentZoomState.k) : 30))}))
+                .tickFormat(d3.utcFormat("%-H:%-M")))
             .call(g => g.select(".domain").remove());
 
             // .tickSize(-height) to add grid
@@ -191,6 +193,7 @@ export default function CandleStickChart({ticker, width, height}) {
 
         // gets the price from the mouse Y position
         const crosshairValueY = yScale.invert(mCoord[1] + marginTop)
+
         const crosshairValueX = d.date
         
         const formatDate = d3.utcFormat("%Y-%m-%d %I:%M");
@@ -256,6 +259,41 @@ export default function CandleStickChart({ticker, width, height}) {
         const range = xScale.range()
         const scale = d3.scaleQuantize().domain(range).range(domain)
         return scale(x)
+    }
+
+    function rescale(){
+        let scale = d3.scaleBand()
+            .domain(dates)
+            .range([marginLeft, width-marginRight])
+            .paddingInner(0.3)
+
+        scale.range([marginLeft, width - marginRight].map(d => currentZoomState.applyX(d)))
+
+        const startIndex = getXIndex(invert(marginLeft, scale))
+        const endIndex = getXIndex(invert(marginLeft + width, scale))
+
+        const tempArr = []
+
+        dates.map((value, index) => {
+            if(index >= startIndex && index <= endIndex){
+                tempArr.push(value)
+            }
+        })
+
+        return tempArr
+    }
+
+    function getXIndex(x){
+        const bisectDate = d3.bisector(d => d.date).left
+        const i = bisectDate(data, x, 1)
+        const d0 = data[i-1]
+        const d1 = data[i]
+        let index = i-1
+        if(d1){
+            index = x - d0.date > d1.date - x ? i : i-1
+        }
+
+        return index
     }
 
     return (
