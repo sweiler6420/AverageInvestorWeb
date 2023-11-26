@@ -4,7 +4,6 @@ import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import DarkModeSwitcher from './DarkModeSwitcher'
 import { ReactComponent as Logo } from '../../assets/Changed_Logo.svg'
-import { useSignOut, useIsAuthenticated } from 'react-auth-kit'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 
@@ -12,8 +11,6 @@ export default function Header() {
   const { pathway } = useContext(PathwayContext)
   const location = useLocation()
   const navigate = useNavigate()
-  const signOut = useSignOut()
-  const isAuthenticated = useIsAuthenticated()
   const [ currentRoute, setCurrentRoute ] = useState()
 
   const user = [
@@ -37,7 +34,7 @@ export default function Header() {
 
   function logout() {
     console.log("log out")
-    signOut()
+    // signOut()
     navigate("login")
   }
 
@@ -74,7 +71,7 @@ export default function Header() {
                   </div>
                 </div>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                  {!isAuthenticated() ?
+                  {/* {!isAuthenticated() ?
                   <div className='flex space-x-4'>
                     {currentRoute && currentRoute !== '/login' ?
                       <a href="/login" className='bg-secondary text-text dark:bg-secondary dark:text-text hover:bg-primary hover:text-reverse-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
@@ -120,7 +117,7 @@ export default function Header() {
                         </Menu.Items>
                       </Transition>
                     </Menu> 
-                  </>}
+                  </>} */}
                 </div>
               </div>
             </div>

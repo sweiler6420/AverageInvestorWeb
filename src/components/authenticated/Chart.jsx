@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react'
 import useApi from '../../hooks/useApi'
-import ErrorsContext from '../../ErrorsContext'
 import { useNavigate } from 'react-router-dom'
 import CandleStickChart from './widgets/CandleStickChart'
 import Watchlist from './widgets/Watchlist'
 
 export default function Chart() {
-    const { error, setError } = useContext(ErrorsContext)
     const { apiGet } = useApi()
     const [stock, setStock] = useState("")
     const [response, setResponse] = useState()
+    const navigate = useNavigate()
 
 
     function getStocks(event) {
@@ -22,7 +21,14 @@ export default function Chart() {
         };
 
         apiGet(`v1/stock_data`, payload).then( response => {
-            setResponse(response)
+            console.log(response)
+            if(response.status && response.status === 403){
+                console.log("redirect")
+                navigate('/login')
+            }
+            else{
+                setResponse(response)
+            }
         })
     }
 
@@ -35,7 +41,7 @@ export default function Chart() {
             </label>
             <button className='text-black dark:text-white bg-background dark:bg-background'>Get Stock</button>
         </form>
-        <p>{error}</p>
+        {/* <p>{error}</p> */}
         <div className='bg-white flex flex-auto items-center'>
             <Watchlist/>
         </div>

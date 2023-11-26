@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useContext } from 'react'
+import { useNavigate} from "react-router-dom"
 import useApi from '../../../hooks/useApi'
 import ErrorsContext from '../../../ErrorsContext'
-import { webglStrokeColor } from 'd3fc'
 
 export default function Chart() {
     const { error, setError } = useContext(ErrorsContext)
     const { apiGet } = useApi()
     const [watchlist, setWatchlist] = useState()
+    const navigate = useNavigate()
 
     useEffect(() => {
         var payload = {}
 
         apiGet(`v1/watchlist`, payload).then( response => {
+            if(response.status && response.status === 403){
+                navigate('/login')
+            }
             setWatchlist(response)
         })
     }, [])

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { useIsAuthenticated } from 'react-auth-kit'
 import useApi from '../../hooks/useApi'
 import ErrorsContext from '../../ErrorsContext'
 import { useNavigate } from 'react-router-dom'
@@ -13,7 +12,7 @@ import ThemeContext from '../../ThemeContext'
 export default function SignUp() {
     const { error } = useContext(ErrorsContext)
     const { theme } = useContext(ThemeContext)
-    const { apiPost } = useApi()
+    const { apiSignUp } = useApi()
     const [email, setEmail] = useState("")
     const [emailError, setEmailError] = useState("")
     const [usernameError, setUsernameError] = useState("")
@@ -24,14 +23,13 @@ export default function SignUp() {
     const [visible, setVisible] = useState(true)
     const [response, setResponse] = useState("")
 
-    const isAuthenticated = useIsAuthenticated()
     const navigate = useNavigate()
 
-    useEffect(() => {
-        if(isAuthenticated()){
-            navigate("/login/stocks")
-        }
-    }, [])
+    // useEffect(() => {
+    //     if(isAuthenticated()){
+    //         navigate("/login/stocks")
+    //     }
+    // }, [])
 
     useEffect( ()=> {
         if (error.length === 0 && response !== ""){
@@ -61,7 +59,7 @@ export default function SignUp() {
                 'email': email.toLowerCase()
             };
     
-            apiPost(`v1/users`, payload).then( response => {
+            apiSignUp(`v1/users`, payload).then( response => {
                 setResponse(response)
             })
         }
