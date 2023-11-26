@@ -2,6 +2,7 @@ import { useState, useContext } from 'react'
 import appConfig from '../app-config.json'
 import ErrorsContext from "../ErrorsContext";
 import { useAuthHeader} from 'react-auth-kit'
+import { useNavigate } from 'react-router-dom'
 
 export default function useApi() {
     const { setError } = useContext(ErrorsContext)
@@ -24,6 +25,11 @@ export const apiCall = async (method, token, setError, endpoint, _params={})=> {
           isDelete = method === 'delete',
           login = endpoint === 'v1/login',
           signup = endpoint === 'v1/users'
+
+    // If no token in cookies and endpoint is not login then we dont want to make call to api
+    if(!endpoint.includes("login") && !token()){
+        return
+    }
 
     setError([])
 
@@ -98,8 +104,18 @@ export const apiCall = async (method, token, setError, endpoint, _params={})=> {
     }
 
     if (isGet) {
+        // let url = ''
+        // if(Object.keys(params).length != 0){
+        //     const uriQuery = `?${URIEncodeObject(params)}`
+        //     url = `${appConfig.apiUri}/${endpoint}${uriQuery}`
+        // }
+        // else{
+        //     url = `${appConfig.apiUri}/${endpoint}`
+        // }
+
         const uriQuery = `?${URIEncodeObject(params)}`
         const url = `${appConfig.apiUri}/${endpoint}${uriQuery}`
+       
         const headers = { 'Content-Type': 'application/json' }
         const body = undefined
         

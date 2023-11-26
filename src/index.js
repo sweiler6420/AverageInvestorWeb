@@ -6,9 +6,11 @@ import { BrowserRouter } from "react-router-dom"
 import { AuthProvider } from "react-auth-kit"
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+//window.location.protocol === "https:"
+console.log(window.location.hostname)
 root.render(
   <React.StrictMode>
-    <AuthProvider authType={"cookie"} authName={"avg_inv_auth"} cookieDomain={window.location.hostname} cookieSecure={false}>
+    <AuthProvider authType={"cookie"} authName={"avg_inv_auth"} cookieDomain={window.location.hostname} cookieSecure={false}> 
         <BrowserRouter>
           <App />
         </BrowserRouter>

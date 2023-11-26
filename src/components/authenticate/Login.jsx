@@ -48,9 +48,8 @@ export default function Login() {
         if (error.length === 0 && response !== ""){
             signIn({
                 token: response.access_token,
-                expiresIn: 3600,
-                tokenType: "Bearer",
-                authState: { user_id: "test"}
+                expiresIn: response.expire,
+                tokenType: response.token_type,
             })
             if(rememberMe){
                 localStorage.setItem("username", JSON.stringify(username));

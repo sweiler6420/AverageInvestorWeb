@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { useSignIn } from 'react-auth-kit'
 import useApi from '../../hooks/useApi'
 import ErrorsContext from '../../ErrorsContext'
 import { useNavigate } from 'react-router-dom'
-import CandleStickChart from './CandleStickChart'
+import CandleStickChart from './widgets/CandleStickChart'
+import Watchlist from './widgets/Watchlist'
 
 export default function Chart() {
     const { error, setError } = useContext(ErrorsContext)
@@ -11,7 +11,8 @@ export default function Chart() {
     const [stock, setStock] = useState("")
     const [response, setResponse] = useState()
 
-    function signin(event) {
+
+    function getStocks(event) {
         event.preventDefault()
         
         var payload = {
@@ -27,7 +28,7 @@ export default function Chart() {
 
     return (
     <div className="bg-background dark:bg-background">
-        <form onSubmit={signin}>
+        <form onSubmit={getStocks}>
             <label className='text-black dark:text-white'> 
                 Stock:
                 <input className='bg-background dark:bg-background' type="text" onChange={event => setStock(event.target.value)} value={stock}/>
@@ -35,6 +36,9 @@ export default function Chart() {
             <button className='text-black dark:text-white bg-background dark:bg-background'>Get Stock</button>
         </form>
         <p>{error}</p>
+        <div className='bg-white flex flex-auto items-center'>
+            <Watchlist/>
+        </div>
         <div className='bg-white flex flex-auto items-center'>
             <CandleStickChart ticker={response} width={928} height={600}/> 
         </div>

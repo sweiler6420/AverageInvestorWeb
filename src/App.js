@@ -31,7 +31,6 @@ export default function App() {
   const [ pathway, setPathway ] = useState(pathwayInit)
 
   const isAuthenticated = useIsAuthenticated()
-  const auth = isAuthenticated()
 
   useEffect(() => {
     if (error.length >= 1) {
@@ -54,16 +53,16 @@ export default function App() {
     <ErrorsContext.Provider value={{error, setError}}>
       <ThemeContext.Provider value={{theme, setTheme}}>
         <PathwayContext.Provider value={{pathway, setPathway}}>
-        <AppContainer>
-          <Header/>
-          <Routes>
-            <Route path='/' element={<Home />}></Route>
-            <Route path='/login' element={<Login />}></Route>
-            <Route path='/signup' element={<SignUp />}></Route>
-            <Route path='/login/recovery' element={<Recovery />}></Route>
-            <Route path='/login/stocks' element={<RequireAuth loginPath='/login'><Chart /></RequireAuth>}></Route>
-          </Routes>
-        </AppContainer>
+          <AppContainer>
+            <Header/>
+            <Routes>
+              <Route path='/' element={<Home />}></Route>
+              <Route path='/login' element={<Login />}></Route>
+              <Route path='/signup' element={<SignUp />}></Route>
+              <Route path='/login/recovery' element={<Recovery />}></Route>
+              <Route path='/login/stocks' element={<RequireAuth loginPath='/login'><Chart /></RequireAuth>}></Route>
+            </Routes>
+          </AppContainer>
         </PathwayContext.Provider>
       </ThemeContext.Provider>
     </ErrorsContext.Provider>
