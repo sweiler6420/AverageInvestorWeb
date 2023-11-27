@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import ErrorsContext from './ErrorsContext'
 import ThemeContext from './ThemeContext'
 import PathwayContext from './PathwayContext'
-import { RequireAuth, useIsAuthenticated } from 'react-auth-kit'
+import RequireAuth from './components/authenticate/RequireAuth';
 
 import Home from './components/home/Home'
 import Login from './components/authenticate/Login'
@@ -18,19 +18,24 @@ const AppContainer = styled.div`
   height: 100%;
 `;
 
+const ROLES = {
+  'User': 2001,
+  'Editor': 1984,
+  'Admin': 5150
+}
+
 export default function App() {
   const pathwayInit = [
-    { name: 'Home', href: '/', current: false },
-    { name: 'Login', href: '/login', current: false },
-    { name: 'Signup', href: '/signup', current: false },
-    { name: 'Stocks', href: '/login/stocks', current: false }]
+    { name: 'Home', href: '/', current: false, show: true, requireAuth: false},
+    { name: 'Login', href: '/login', current: false, show: false, requireAuth: false},
+    { name: 'Signup', href: '/signup', current: false, show: false, requireAuth: false},
+    { name: 'Stocks', href: '/login/stocks', current: false, show: true, requireAuth: true}]
 
   const location = useLocation()
   const [ error, setError ] = useState([])
   const [ theme, setTheme ] = useState(localStorage.theme)
   const [ pathway, setPathway ] = useState(pathwayInit)
 
-  const isAuthenticated = useIsAuthenticated()
 
   useEffect(() => {
     if (error.length >= 1) {
@@ -60,7 +65,7 @@ export default function App() {
               <Route path='/login' element={<Login />}></Route>
               <Route path='/signup' element={<SignUp />}></Route>
               <Route path='/login/recovery' element={<Recovery />}></Route>
-              <Route path='/login/stocks' element={<RequireAuth loginPath='/login'><Chart /></RequireAuth>}></Route>
+              <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<Chart />} /></Route>
             </Routes>
           </AppContainer>
         </PathwayContext.Provider>

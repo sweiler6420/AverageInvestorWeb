@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { useIsAuthenticated, useSignIn } from 'react-auth-kit'
 import useApi from '../../hooks/useApi'
+import useAuth from '../../hooks/useAuth';
 import ErrorsContext from '../../ErrorsContext'
 import ThemeContext from '../../ThemeContext'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -13,25 +13,18 @@ import { Underline } from 'react-feather'
 export default function Login() {
     const { error } = useContext(ErrorsContext)
     const { theme } = useContext(ThemeContext)
-    const { apiPost } = useApi()
+    const { apiLogin } = useApi()
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [visible, setVisible] = useState(false)
     const [response, setResponse] = useState("")
     const [rememberMe, setRememberMe] = useState(localStorage.rememberMe === 'true')
 
-    const isAuthenticated = useIsAuthenticated()
     const navigate = useNavigate()
     const location = useLocation()
+    const { login } = useAuth();
     const signUpData = location.state
 
-    const signIn = useSignIn()
-
-    useEffect(() => {
-        if(isAuthenticated()){
-            navigate("stocks")
-        }
-    }, [])
 
     useEffect(() => {
         localStorage.setItem('rememberMe', rememberMe)
@@ -42,15 +35,14 @@ export default function Login() {
             setUsername(localStorage.username !== "" ? JSON.parse(localStorage.getItem('username')) : "")
             setPassword(localStorage.pass !== "" ? JSON.parse(localStorage.getItem('pass')) : "")
         }
-    }, [username, password])
+    }, [])
 
     useEffect(()=> {
         if (error.length === 0 && response !== ""){
-            signIn({
-                token: response.access_token,
-                expiresIn: response.expire,
-                tokenType: response.token_type,
-            })
+            const access_token = response.access_token
+            const roles = 2001
+            login(access_token, roles)
+
             if(rememberMe){
                 localStorage.setItem("username", JSON.stringify(username));
                 localStorage.setItem("pass", JSON.stringify(password));
@@ -58,6 +50,7 @@ export default function Login() {
                 localStorage.setItem('username', "")
                 localStorage.setItem('pass', "")
             }
+
             navigate("stocks")
         }
     }, [response])
@@ -85,7 +78,7 @@ export default function Login() {
                 'password': password,
             };
     
-            apiPost(`v1/login`, payload).then( response => {
+            apiLogin(`v1/login`, payload).then( response => {
                 setResponse(response)
             })
         }
