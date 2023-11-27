@@ -1,56 +1,56 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { useIsAuthenticated, useSignIn } from 'react-auth-kit'
 import useApi from '../../hooks/useApi'
+import useAuth from '../../hooks/useAuth';
 import ErrorsContext from '../../ErrorsContext'
 import ThemeContext from '../../ThemeContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import loginImg from '../../assets/loginImg2.jpg'
 import styles from '../styles/Form.styles'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { Underline } from 'react-feather'
 
 
 export default function Login() {
     const { error } = useContext(ErrorsContext)
     const { theme } = useContext(ThemeContext)
-    const { apiPost } = useApi()
-    const [username, setUsername] = useState(localStorage.username)
-    const [password, setPassword] = useState(localStorage.pass)
+    const { apiLogin } = useApi()
+    const [username, setUsername] = useState("")
+    const [password, setPassword] = useState("")
     const [visible, setVisible] = useState(false)
     const [response, setResponse] = useState("")
     const [rememberMe, setRememberMe] = useState(localStorage.rememberMe === 'true')
 
-    const isAuthenticated = useIsAuthenticated()
     const navigate = useNavigate()
     const location = useLocation()
+    const { login } = useAuth();
     const signUpData = location.state
 
-    const signIn = useSignIn()
-
-    useEffect(() => {
-        if(isAuthenticated()){
-            navigate("stocks")
-        }
-    }, [])
 
     useEffect(() => {
         localStorage.setItem('rememberMe', rememberMe)
     }, [rememberMe])
 
+    useEffect(() => {
+        if(rememberMe){
+            setUsername(localStorage.username !== "" ? JSON.parse(localStorage.getItem('username')) : "")
+            setPassword(localStorage.pass !== "" ? JSON.parse(localStorage.getItem('pass')) : "")
+        }
+    }, [])
+
     useEffect(()=> {
         if (error.length === 0 && response !== ""){
-            signIn({
-                token: response.access_token,
-                expiresIn: 3600,
-                tokenType: "Bearer",
-                authState: { user_id: "test"}
-            })
+            const access_token = response.access_token
+            const roles = 2001
+            login(access_token, roles)
+
             if(rememberMe){
-                localStorage.setItem('username', username)
-                localStorage.setItem('pass', password)
+                localStorage.setItem("username", JSON.stringify(username));
+                localStorage.setItem("pass", JSON.stringify(password));
             }else{
                 localStorage.setItem('username', "")
                 localStorage.setItem('pass', "")
             }
+
             navigate("stocks")
         }
     }, [response])
@@ -69,29 +69,27 @@ export default function Login() {
         }
     }, [error])
 
-
-    function checkHandler() {
-        setRememberMe(!rememberMe)
-    }
-
     function signin(event) {
         event.preventDefault()
         
-        if (validated) {
+        if (validated()) {
             var payload = {
                 'username': username,
                 'password': password,
             };
     
-            apiPost(`v1/login`, payload).then( response => {
+            apiLogin(`v1/login`, payload).then( response => {
                 setResponse(response)
             })
         }
     }
 
     function validated() {
-        if (username !== "" && password !== "") {
+        if (username !== "" && username !== undefined && password !== "" && password !== undefined) {
             return true
+        }
+        else{
+            return false
         }
     }
 
@@ -107,12 +105,12 @@ export default function Login() {
                     <h2 className={styles.form_header}> SIGN IN</h2>
                     <div className={styles.form_input_div}>
                         <label> Username: </label>
-                        <input className={styles.form_input} type="text" onChange={event => setUsername(event.target.value)} value={username}/>
+                        <input className={styles.form_input} type="text" onChange={event => setUsername(event.target.value)} value={username ? username : ""}/>
                     </div>
                     <div className={styles.form_input_div}>
                         <label> Password: </label>
                         <div className='relative'>
-                            <input className={styles.form_input} type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password}/> 
+                            <input className={styles.form_input} type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password ? password : ""}/> 
                             <div className='absolute top-1 right-1'>
                                 {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6 text-primary pr-1' aria-hidden='true' /> : 
                                     <EyeSlashIcon onClick={() => setVisible(true)} className='h-12 w-6 text-primary pr-1' aria-hidden='true' />}
