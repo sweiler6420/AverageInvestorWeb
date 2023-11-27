@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {Routes, Route, useLocation} from 'react-router-dom'
 import styled from 'styled-components'
 import ErrorsContext from './ErrorsContext'
-import ThemeContext from './ThemeContext'
 import PathwayContext from './PathwayContext'
-import RequireAuth from './components/authenticate/RequireAuth';
+import RequireAuth from './components/RequireAuth';
 
 import Home from './components/home/Home'
 import Login from './components/authenticate/Login'
@@ -56,20 +55,18 @@ export default function App() {
 
   return (
     <ErrorsContext.Provider value={{error, setError}}>
-      <ThemeContext.Provider value={{theme, setTheme}}>
-        <PathwayContext.Provider value={{pathway, setPathway}}>
-          <AppContainer>
-            <Header/>
-            <Routes>
-              <Route path='/' element={<Home />}></Route>
-              <Route path='/login' element={<Login />}></Route>
-              <Route path='/signup' element={<SignUp />}></Route>
-              <Route path='/login/recovery' element={<Recovery />}></Route>
-              <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<Chart />} /></Route>
-            </Routes>
-          </AppContainer>
-        </PathwayContext.Provider>
-      </ThemeContext.Provider>
+      <PathwayContext.Provider value={{pathway, setPathway}}>
+        <AppContainer>
+          <Header/>
+          <Routes>
+            <Route path='/' element={<Home />}></Route>
+            <Route path='/login' element={<Login />}></Route>
+            <Route path='/signup' element={<SignUp />}></Route>
+            <Route path='/login/recovery' element={<Recovery />}></Route>
+            <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<Chart />} /></Route>
+          </Routes>
+        </AppContainer>
+      </PathwayContext.Provider>
     </ErrorsContext.Provider>
   );
 }
