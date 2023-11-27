@@ -7,7 +7,7 @@ import { AuthProvider } from "./AuthProvider"
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 //window.location.protocol === "https:"
-console.log(window.location.hostname)
+
 root.render(
   <React.StrictMode>
     <AuthProvider> 

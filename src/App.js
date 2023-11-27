@@ -26,10 +26,10 @@ const ROLES = {
 
 export default function App() {
   const pathwayInit = [
-    { name: 'Home', href: '/', current: false },
-    { name: 'Login', href: '/login', current: false },
-    { name: 'Signup', href: '/signup', current: false },
-    { name: 'Stocks', href: '/login/stocks', current: false }]
+    { name: 'Home', href: '/', current: false, show: true, requireAuth: false},
+    { name: 'Login', href: '/login', current: false, show: false, requireAuth: false},
+    { name: 'Signup', href: '/signup', current: false, show: false, requireAuth: false},
+    { name: 'Stocks', href: '/login/stocks', current: false, show: true, requireAuth: true}]
 
   const location = useLocation()
   const [ error, setError ] = useState([])

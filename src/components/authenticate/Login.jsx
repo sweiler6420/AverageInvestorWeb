@@ -10,7 +10,6 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { Underline } from 'react-feather'
 
 
-
 export default function Login() {
     const { error } = useContext(ErrorsContext)
     const { theme } = useContext(ThemeContext)
@@ -23,15 +22,9 @@ export default function Login() {
 
     const navigate = useNavigate()
     const location = useLocation()
-    const { setAuth } = useAuth();
+    const { login } = useAuth();
     const signUpData = location.state
 
-
-    // useEffect(() => {
-    //     if(isAuthenticated()){
-    //         navigate("stocks")
-    //     }
-    // }, [])
 
     useEffect(() => {
         localStorage.setItem('rememberMe', rememberMe)
@@ -42,13 +35,14 @@ export default function Login() {
             setUsername(localStorage.username !== "" ? JSON.parse(localStorage.getItem('username')) : "")
             setPassword(localStorage.pass !== "" ? JSON.parse(localStorage.getItem('pass')) : "")
         }
-    }, [username, password])
+    }, [])
 
     useEffect(()=> {
         if (error.length === 0 && response !== ""){
             const access_token = response.access_token
             const roles = 2001
-            setAuth({ username, password, roles, access_token });
+            login(access_token, roles)
+
             if(rememberMe){
                 localStorage.setItem("username", JSON.stringify(username));
                 localStorage.setItem("pass", JSON.stringify(password));
@@ -56,6 +50,7 @@ export default function Login() {
                 localStorage.setItem('username', "")
                 localStorage.setItem('pass', "")
             }
+
             navigate("stocks")
         }
     }, [response])

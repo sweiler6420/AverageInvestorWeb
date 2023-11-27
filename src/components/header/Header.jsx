@@ -6,12 +6,13 @@ import DarkModeSwitcher from './DarkModeSwitcher'
 import { ReactComponent as Logo } from '../../assets/Changed_Logo.svg'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
+import useAuth from '../../hooks/useAuth';
 
 export default function Header() {
   const { pathway } = useContext(PathwayContext)
-  const location = useLocation()
   const navigate = useNavigate()
   const [ currentRoute, setCurrentRoute ] = useState()
+  const { authenticated, logout } = useAuth();
 
   const user = [
     { name: 'Profile', href: '#', current: false },
@@ -32,9 +33,8 @@ export default function Header() {
     return classes.filter(Boolean).join(' ')
   }
 
-  function logout() {
-    console.log("log out")
-    // signOut()
+  function logout_click() {
+    logout()
     navigate("login")
   }
 
@@ -63,15 +63,16 @@ export default function Header() {
                   <div className="hidden sm:ml-6 sm:block">
                     <div className="flex space-x-4">
                       {pathway.map((item) => (
-                        <a key={item.name} href={item.href} className={classNames(item.current ? 'bg-secondary text-text dark:bg-secondary dark:text-text ' : 'text-reverse-text bg-primary hover:bg-secondary hover:text-text','rounded-md px-3 py-2 text-sm font-medium')}aria-current={item.current ? 'page' : undefined}>
-                          {item.name}
-                        </a> 
+                        item.show && (!item.requireAuth || item.requireAuth && authenticated) &&
+                          <a key={item.name} href={item.href} className={classNames(item.current ? 'bg-secondary text-text dark:bg-secondary dark:text-text ' : 'text-reverse-text bg-primary hover:bg-secondary hover:text-text','rounded-md px-3 py-2 text-sm font-medium')}aria-current={item.current ? 'page' : undefined}>
+                            {item.name}
+                          </a>
                       ))}
                     </div>
                   </div>
                 </div>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                  {/* {!isAuthenticated() ?
+                  {!authenticated ?
                   <div className='flex space-x-4'>
                     {currentRoute && currentRoute !== '/login' ?
                       <a href="/login" className='bg-secondary text-text dark:bg-secondary dark:text-text hover:bg-primary hover:text-reverse-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
@@ -109,7 +110,7 @@ export default function Header() {
                           ))}
                           <Menu.Item>
                               {({ active }) => (
-                                <button onClick={() => logout()} className={classNames(active ? 'bg-secondary text-text' : '', 'block px-4 py-2 text-center text-sm text-text bg-background-sub w-full')}>
+                                <button onClick={() => logout_click()} className={classNames(active ? 'bg-secondary text-text' : '', 'block px-4 py-2 text-center text-sm text-text bg-background-sub w-full')}>
                                   Logout
                                 </button>
                               )}
@@ -117,7 +118,7 @@ export default function Header() {
                         </Menu.Items>
                       </Transition>
                     </Menu> 
-                  </>} */}
+                  </>}
                 </div>
               </div>
             </div>

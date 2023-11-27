@@ -53,7 +53,7 @@ export const apiGetFunction = async (axiosPrivate,endpoint, _params={})=> {
 
     try{
         const response = await axiosPrivate.get(url)
-        return response.data
+        return {data: response.data}
     } catch (err) {
         console.log(err)
         return {"status": err.request.status, "message": err.message, "error": err.name}
@@ -70,7 +70,7 @@ export const apiPostFunction = async (axiosPrivate, endpoint, _params={})=> {
 
     try{
         const response = await axiosPrivate.get(url)
-        return response.data
+        return {data: response.data}
     } catch (err) {
         console.log(err)
         return {"status": err.request.status, "message": err.message, "error": err.name}

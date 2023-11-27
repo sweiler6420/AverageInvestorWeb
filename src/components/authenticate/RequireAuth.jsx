@@ -6,9 +6,9 @@ const RequireAuth = ({ allowedRoles }) => {
     const location = useLocation();
 
     return (
-        allowedRoles.includes(auth.roles)
+        allowedRoles.includes(parseInt(auth.roles))
             ? <Outlet />
-            : auth?.user
+            : auth?.access_token === 'undefined'
                 ? <Navigate to="/unauthorized" state={{ from: location }} replace />
                 : <Navigate to="/login" state={{ from: location }} replace />
     );

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import CandleStickChart from './widgets/CandleStickChart'
 import Watchlist from './widgets/Watchlist'
 
+
 export default function Chart() {
     const { apiGet } = useApi()
     const [stock, setStock] = useState("")
@@ -21,13 +22,12 @@ export default function Chart() {
         };
 
         apiGet(`v1/stock_data`, payload).then( response => {
-            console.log(response)
-            if(response.status && response.status === 403){
-                console.log("redirect")
-                navigate('/login')
+            if(response.data){
+                setResponse(response.data)
             }
             else{
-                setResponse(response)
+                console.log(response)
+                //Handle errors
             }
         })
     }
