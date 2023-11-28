@@ -39,6 +39,7 @@ export default function App() {
   const [ theme, setTheme ] = useState(localStorage.theme)
   const [ pathway, setPathway ] = useState(pathwayInit)
 
+  document.body.style.overflow = "hidden"
 
   useEffect(() => {
     if (error.length >= 1) {

@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef} from 'react'
 import CandleStickChart from './widgets/CandleStickChart'
 import Watchlist from './widgets/Watchlist'
-import GridLayout from "react-grid-layout";
+import GridLayout, {WidthProvider} from "react-grid-layout";
 import '../../css/dashboard.css'
+
+const Grid = WidthProvider(GridLayout)
 
 export default function ChartV2() {
     const [ layout, setLayout ] = useState([
         {
             key: 'watchlist',
-            dataGrid: {x: 0, y: 0, w: 3, h: 9},
+            dataGrid: {x: 0, y: 0, w: 2, h: 9, maxW: 4},
             graph: <Watchlist/>,
             static: true,
             heading: 'Watchlist'
@@ -22,16 +24,10 @@ export default function ChartV2() {
         },
     ])
 
-
-    function something(event) {
-        // console.log(event)
-    }
-
-
     return (
-        <div className='w-screen h-screen border border-black'>
-            <GridLayout rowHeight={30} width={1200} draggableHandle=".dragMe" onResizeStop={something}>
-                <div key="watchlist" data-grid={{x: 0, y: 0, w: 3, h: 9}} className='static bg-background overflow-hidden'>
+        <div className='w-screen h-screen'>
+            <Grid rowHeight={30} draggableHandle=".dragMe">
+                <div key="watchlist" data-grid={{x: 0, y: 0, w: 2, h: 9, maxW: 4, isBounded: true}} className='static bg-background overflow-hidden'>
                     <div className={'heading'}>
                         <div className={'dragMe'}/>
                         'Watchlist'
@@ -49,7 +45,7 @@ export default function ChartV2() {
                         </div>
                     )
                 })} */}
-            </GridLayout>
+            </Grid>
         </div>
     )
 }
