@@ -14,7 +14,6 @@ import ChartV2 from './components/authenticated/Chart2'
 import Header from './components/header/Header';
 
 import './css/react-grid-layout.css'
-import './css/react-resizable.css'
 
 const AppContainer = styled.div`
   width: 100%;
