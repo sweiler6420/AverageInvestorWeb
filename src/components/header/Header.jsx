@@ -1,10 +1,10 @@
 import PathwayContext from '../../PathwayContext'
 import { Fragment, useContext, useState} from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
-import { SunIcon, MoonIcon, Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import DarkModeSwitcher from './DarkModeSwitcher'
 import { ReactComponent as Logo } from '../../assets/Changed_Logo.svg'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import useAuth from '../../hooks/useAuth';
 
@@ -63,7 +63,7 @@ export default function Header() {
                   <div className="hidden sm:ml-6 sm:block">
                     <div className="flex space-x-4">
                       {pathway.map((item) => (
-                        item.show && (!item.requireAuth || item.requireAuth && authenticated) &&
+                        item.show && (!item.requireAuth || (item.requireAuth && authenticated)) &&
                           <a key={item.name} href={item.href} className={classNames(item.current ? 'bg-secondary text-text dark:bg-secondary dark:text-text ' : 'text-reverse-text bg-primary hover:bg-secondary hover:text-text','rounded-md px-3 py-2 text-sm font-medium')}aria-current={item.current ? 'page' : undefined}>
                             {item.name}
                           </a>
