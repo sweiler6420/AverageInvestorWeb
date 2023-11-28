@@ -8662,11 +8662,6 @@ react-refresh@^0.11.0:
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.11.0.tgz#77198b944733f0f1f1a90e791de4541f9f074046"
   integrity sha512-F27qZr8uUqwhWZboondsPx8tnC3Ct3SxZA3V5WyEvujRyyNv0VYPhoBg1gZ8/MV5tubQp76Trw8lTv9hzRBa+A==
 
-react-resizeable@^0.2.6:
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/react-resizeable/-/react-resizeable-0.2.6.tgz#ef3cc6178eb6b80c7ec3b3e9489fd088db0164fc"
-  integrity sha512-C5FXuIJqG0Hm2Thn+g7lnYiL3pXrASuTf9l2X3RrNGm1kTD38B0Z5SFMgtGIo8YMNDv0HqAvP9Q22f+H6VquNA==
-
 react-rnd@^10.4.1:
   version "10.4.1"
   resolved "https://registry.yarnpkg.com/react-rnd/-/react-rnd-10.4.1.tgz#9e1c3f244895d7862ef03be98b2a620848c3fba1"
