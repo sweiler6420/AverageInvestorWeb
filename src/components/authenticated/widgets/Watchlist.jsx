@@ -7,10 +7,6 @@ export default function Chart() {
     const [watchlist, setWatchlist] = useState()
 
     useEffect(() => {
-
-    })
-
-    useEffect(() => {
         var payload = {}
 
         apiGet(`v1/watchlist`, payload).then( response => {
@@ -37,7 +33,29 @@ export default function Chart() {
         <div className="bg-white">
             {watchlist && <>
                 <DragDropContext onDragEnd={handleOnDragEnd}>
-                    <Droppable droppableId="stocks">
+                    <Droppable droppableId="stocks"
+                    renderClone={(provided, snapshot, rubric) => (
+                        <li 
+                        {...provided.draggableProps} 
+                        {...provided.dragHandleProps}
+                        ref={provided.innerRef}
+                        className={`list-none px-3 py-2 border-t border-black ${rubric["source"]["index"] === 0 ? "border-none" : ""}`}
+                        >
+                            <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-md text-black truncate">
+                                        {watchlist[rubric["source"]["index"]].ticker_symbol.toUpperCase()}
+                                    </p>
+                                    <p className="text-sm text-black truncate">
+                                        {watchlist[rubric["source"]["index"]].company}
+                                    </p>
+                                </div>
+                                <div className="inline-flex items-center text-base font-semibold text-black">
+                                    $320
+                                </div>
+                            </div>
+                        </li>
+                        )}>
                         {(provided) =>(
                             <ul {...provided.droppableProps} ref={provided.innerRef} className='max-w-md border border-black'>
                                 {watchlist.map((stock, index) => 
