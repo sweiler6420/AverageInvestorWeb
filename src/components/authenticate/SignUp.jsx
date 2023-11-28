@@ -7,11 +7,11 @@ import styles from '../styles/Form.styles'
 import validator from 'validator'
 import Tooltip from 'react-power-tooltip'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import ThemeContext from '../../ThemeContext'
+import useDarkMode from "../../hooks/useDarkMode";
 
 export default function SignUp() {
     const { error } = useContext(ErrorsContext)
-    const { theme } = useContext(ThemeContext)
+    const { theme } = useDarkMode();
     const { apiSignUp } = useApi()
     const [email, setEmail] = useState("")
     const [emailError, setEmailError] = useState("")

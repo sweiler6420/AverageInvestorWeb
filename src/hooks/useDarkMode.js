@@ -1,16 +1,7 @@
-import { useContext, useEffect } from "react"
-import ThemeContext from '../ThemeContext'
+import { useContext } from "react"
+import ThemeContext from '../ThemeProvider'
  
 export default function useDarkMode() {
-    const { theme, setTheme } = useContext(ThemeContext)
-    const colorTheme = theme === "dark" ? "light" : "dark";
- 
-    useEffect(() => {
-        const root = window.document.documentElement;
-        root.classList.remove(colorTheme);
-        root.classList.add(theme);
-        localStorage.setItem('theme', theme);
-    }, [theme, colorTheme]);
- 
-    return [colorTheme, setTheme]
+    const { theme } = useContext(ThemeContext)
+    return useContext(ThemeContext)
 }

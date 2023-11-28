@@ -4,16 +4,18 @@ import App from './App';
 import { BrowserRouter } from "react-router-dom"
 
 import { AuthProvider } from "./AuthProvider"
+import { ThemeProvider } from "./ThemeProvider"
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-//window.location.protocol === "https:"
 
 root.render(
   <React.StrictMode>
-    <AuthProvider> 
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider> 
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

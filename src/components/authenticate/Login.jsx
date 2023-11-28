@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from 'react'
 import useApi from '../../hooks/useApi'
 import useAuth from '../../hooks/useAuth';
 import ErrorsContext from '../../ErrorsContext'
-import ThemeContext from '../../ThemeContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import loginImg from '../../assets/loginImg2.jpg'
 import styles from '../styles/Form.styles'
@@ -12,7 +11,6 @@ import { Underline } from 'react-feather'
 
 export default function Login() {
     const { error } = useContext(ErrorsContext)
-    const { theme } = useContext(ThemeContext)
     const { apiLogin } = useApi()
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
@@ -24,7 +22,7 @@ export default function Login() {
     const location = useLocation()
     const { login } = useAuth();
     const signUpData = location.state
-
+    
 
     useEffect(() => {
         localStorage.setItem('rememberMe', rememberMe)
@@ -96,8 +94,7 @@ export default function Login() {
     return (
         <div className='grid grid-cols-1 sm:grid-cols-2 h-screen w-full'>
             <div className='hidden sm:block'>
-                {theme === "light" ? <img className='w-full h-full object-cover' src={loginImg} alt=''/> : 
-                    <img className='w-full h-full object-cover' src={loginImg} alt=''/>}
+                <img className='w-full h-full object-cover' src={loginImg} alt=''/>
                 <a className='absolute bottom-1 left-1 text-gray-800' href="http://www.freepik.com/free-ai-image/financial-investment-bull-market_65695918.htm#fromView=search&term=stock&page=1&position=24&track=ais_ai_generated">Image By WangXiNa</a>
             </div>
             <div className={styles.form_div}>
