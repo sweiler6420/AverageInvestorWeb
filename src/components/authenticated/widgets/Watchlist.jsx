@@ -7,6 +7,10 @@ export default function Chart() {
     const [watchlist, setWatchlist] = useState()
 
     useEffect(() => {
+
+    })
+
+    useEffect(() => {
         var payload = {}
 
         apiGet(`v1/watchlist`, payload).then( response => {
@@ -30,15 +34,14 @@ export default function Chart() {
     }
 
     return (
-    <div className="bg-white">
-        {watchlist &&
-            <>
+        <div className="bg-white">
+            {watchlist && <>
                 <DragDropContext onDragEnd={handleOnDragEnd}>
                     <Droppable droppableId="stocks">
                         {(provided) =>(
                             <ul {...provided.droppableProps} ref={provided.innerRef} className='max-w-md border border-black'>
                                 {watchlist.map((stock, index) => 
-                                    <Draggable key={stock.stock_id} draggableId={stock.stock_id} index={index}>
+                                    <Draggable className="bg-black" key={stock.stock_id} draggableId={stock.stock_id} index={index}>
                                         {(provided) => (
                                             <li 
                                             {...provided.draggableProps} 
@@ -71,8 +74,7 @@ export default function Chart() {
                         )}
                     </Droppable>
                 </DragDropContext>
-            </>
-        }
-    </div>
+            </>}
+        </div>
     );
 }

@@ -1,13 +1,18 @@
 import { React, useState, useRef, useEffect } from 'react'
 import * as d3 from 'd3'
 import { zoomTransform } from 'd3'
+import useApi from '../../../hooks/useApi'
 
-export default function CandleStickChart({ticker, width, height}) {
-
+export default function CandleStickChart({overrideWidth, overrideHeight}) {
+    const [ width, setWidth ] = useState(1000)
+    const [ height, setHeight ] = useState(600)
     const [ data, setData ] = useState()
     const [ interval, setInterval ] = useState(5)
     const [ dates, setDates ] = useState()
     const [ viewportData, setViewportData ] = useState()
+    const { apiGet } = useApi()
+    const [stock, setStock] = useState("")
+    const [response, setResponse] = useState()
 
     const svgRef = useRef()
     const chartListener = useRef()
@@ -31,8 +36,8 @@ export default function CandleStickChart({ticker, width, height}) {
 
     useEffect(() => {
         let temp = []
-        if(ticker) {
-            ticker.forEach(function(d) {
+        if(response) {
+            response.forEach(function(d) {
                 temp.push(new Date(d.datetime))
                 d.date = new Date(d.datetime)
                 d.close_price = +d.close_price
@@ -40,11 +45,11 @@ export default function CandleStickChart({ticker, width, height}) {
                 d.low_price = +d.low_price
                 d.high_price = +d.high_price
             })
-            setData(ticker)
+            setData(response)
             setDates(temp)
         }
 
-    }, [ticker])
+    }, [response])
 
     useEffect(() => {if(data && dates) {
 
@@ -296,19 +301,51 @@ export default function CandleStickChart({ticker, width, height}) {
         return index
     }
 
+    function getStocks(event) {
+        event.preventDefault()
+        
+        var payload = {
+            'limit': 540,
+            'offset': 540,
+            'search': stock
+        };
+
+        apiGet(`v1/stock_data`, payload).then( response => {
+            if(response.data){
+                setResponse(response.data)
+                console.log(response.data)
+            }
+            else{
+                console.log(response)
+                //Handle errors
+            }
+        })
+    }
+
     return (
-        <div className='text-black block m-auto'>
-            <svg ref={svgRef} style={{pointerEvents:"none"}}>
-                <rect ref={chartListener}></rect>
-                <text ref={ohlcTooltip} fontSize={"10px"} style={{pointerEvents:"none"}}></text>
-                <line ref={crosshairX} id={"crosshair-x"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
-                <line ref={crosshairY} id={"crosshair-y"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
-                <rect ref={crosshairTooltipBoxY} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
-                <text ref={crosshairTextY} id={"crosshair-text-y"} dominantBaseline="middle" fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
-                <rect ref={crosshairTooltipBoxX} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
-                <text ref={crosshairTextX} id={"crosshair-text-x"} dominantBaseline="hanging" textAnchor='middle' fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
-            </svg>
-        </div>
+        <>
+            <form onSubmit={getStocks}>
+                <label className='text-black dark:text-white'> 
+                    Stock:
+                    <input className='bg-background dark:bg-background' type="text" onChange={event => setStock(event.target.value)} value={stock}/>
+                </label>
+                <button className='text-black dark:text-white bg-background dark:bg-background'>Get Stock</button>
+            </form>
+            <div className='bg-white flex flex-auto items-center'>
+                <div className='text-black block m-auto'>
+                    <svg ref={svgRef} style={{pointerEvents:"none"}}>
+                        <rect ref={chartListener}></rect>
+                        <text ref={ohlcTooltip} fontSize={"10px"} style={{pointerEvents:"none"}}></text>
+                        <line ref={crosshairX} id={"crosshair-x"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
+                        <line ref={crosshairY} id={"crosshair-y"} style={{stroke:"red", strokeOpacity:0.5, strokeWidth:1, strokeDasharray:2.2, display:"block", pointerEvents:"none"}}></line>
+                        <rect ref={crosshairTooltipBoxY} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
+                        <text ref={crosshairTextY} id={"crosshair-text-y"} dominantBaseline="middle" fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
+                        <rect ref={crosshairTooltipBoxX} style={{position: "absolute", fill:"black", opacity:0.6, height:12, rx:3, strokeOpacity:0.5, strokeWidth:1, stroke:"black", pointerEvents:"none"}}></rect>
+                        <text ref={crosshairTextX} id={"crosshair-text-x"} dominantBaseline="hanging" textAnchor='middle' fontSize={"10px"} style={{position:"absolute", height:12, padding:"5px", fill:"white", opacity:0.8, display:"block", pointerEvents:"none"}}></text>
+                    </svg>
+                </div>
+            </div>
+        </>
     )
 }
 

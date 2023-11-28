@@ -10,7 +10,11 @@ import Login from './components/authenticate/Login'
 import Recovery from './components/authenticate/Recovery'
 import SignUp from './components/authenticate/SignUp'
 import Chart from './components/authenticated/Chart'
+import ChartV2 from './components/authenticated/Chart2'
 import Header from './components/header/Header';
+
+import './css/react-grid-layout.css'
+import './css/react-resizable.css'
 
 const AppContainer = styled.div`
   width: 100%;
@@ -63,7 +67,7 @@ export default function App() {
             <Route path='/login' element={<Login />}></Route>
             <Route path='/signup' element={<SignUp />}></Route>
             <Route path='/login/recovery' element={<Recovery />}></Route>
-            <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<Chart />} /></Route>
+            <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<ChartV2 />} /></Route>
           </Routes>
         </AppContainer>
       </PathwayContext.Provider>
