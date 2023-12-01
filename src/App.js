@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {Routes, Route, useLocation} from 'react-router-dom'
 import styled from 'styled-components'
 import ErrorsContext from './ErrorsContext'
-import PathwayContext from './PathwayContext'
 import RequireAuth from './components/RequireAuth';
+
+import { PathProvider } from './PathProvider'
 
 import Home from './components/home/Home'
 import Login from './components/authenticate/Login'
@@ -46,20 +47,10 @@ export default function App() {
       console.log(error)
     }
   }, [error])
-  
-  useEffect(()=> {
-    let pathway_temp = pathwayInit
-    for (var i=0; i < pathway.length; i++){
-      if(pathway_temp[i].href == location.pathname){
-        pathway_temp[i].current = true
-      }
-    }
-    setPathway(pathway_temp)
-  }, [location])
 
   return (
     <ErrorsContext.Provider value={{error, setError}}>
-      <PathwayContext.Provider value={{pathway, setPathway}}>
+      <PathProvider>
         <AppContainer>
           <Header/>
           <Routes>
@@ -70,7 +61,7 @@ export default function App() {
             <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<ChartV2 />} /></Route>
           </Routes>
         </AppContainer>
-      </PathwayContext.Provider>
+      </PathProvider>
     </ErrorsContext.Provider>
   );
 }

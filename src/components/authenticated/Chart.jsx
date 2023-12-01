@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react'
-import CandleStickChart from './widgets/CandleStickChart'
+// import CandleStickChart from './widgets/CandleStickChart'
 import Watchlist from './widgets/Watchlist'
 
 
@@ -17,7 +17,7 @@ export default function Chart() {
             setWidgets([...widgets, <Watchlist/>])
         }
         else if(widget === "Stock Chart"){
-            setWidgets([...widgets, <CandleStickChart/>])
+            setWidgets([...widgets, <Watchlist/>])//<CandleStickChart/>
         }
         
     }

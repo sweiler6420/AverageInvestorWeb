@@ -167,6 +167,9 @@ export default function SignUp() {
                             <p className='text-xs text-center text-red-acc dark:text-red-acc'>{error}</p>: null
                         }
                     </div>
+                    <p onClick={() => {navigate("/login")}} className='text-sm text-text dark:text-text text-center hover:cursor-pointer hover:underline'>
+                        Already Have an Account? Log In Now!
+                    </p>
                 </form>
             </div>
         </div>
