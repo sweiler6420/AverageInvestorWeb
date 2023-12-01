@@ -1,53 +1,51 @@
-import React, { useState, useEffect, useContext } from 'react'
-import useApi from '../../hooks/useApi'
-import { useNavigate } from 'react-router-dom'
-import CandleStickChart from './widgets/CandleStickChart'
+import React, { useState, useEffect} from 'react'
+// import CandleStickChart from './widgets/CandleStickChart'
 import Watchlist from './widgets/Watchlist'
 
 
 export default function Chart() {
-    const { apiGet } = useApi()
-    const [stock, setStock] = useState("")
-    const [response, setResponse] = useState()
-    const navigate = useNavigate()
+    const [widgets, setWidgets] = useState([])
 
+    function handleOnDrag(event, widget){
+        event.dataTransfer.setData("widget", widget)
+    }
 
-    function getStocks(event) {
-        event.preventDefault()
+    function handleOnDrop(event){
+        const widget = event.dataTransfer.getData("widget").toString()
+        console.log(widget)
+        if(widget === "Watchlist"){
+            setWidgets([...widgets, <Watchlist/>])
+        }
+        else if(widget === "Stock Chart"){
+            setWidgets([...widgets, <Watchlist/>])//<CandleStickChart/>
+        }
         
-        var payload = {
-            'limit': 540,
-            'offset': 540,
-            'search': stock
-        };
+    }
 
-        apiGet(`v1/stock_data`, payload).then( response => {
-            if(response.data){
-                setResponse(response.data)
-            }
-            else{
-                console.log(response)
-                //Handle errors
-            }
-        })
+    function handleDragOver(event){
+        event.preventDefault()
     }
 
     return (
     <div className="bg-background dark:bg-background">
-        <form onSubmit={getStocks}>
-            <label className='text-black dark:text-white'> 
-                Stock:
-                <input className='bg-background dark:bg-background' type="text" onChange={event => setStock(event.target.value)} value={stock}/>
-            </label>
-            <button className='text-black dark:text-white bg-background dark:bg-background'>Get Stock</button>
-        </form>
-        {/* <p>{error}</p> */}
-        <div className='bg-white flex flex-auto items-center'>
-            <Watchlist/>
+        <div draggable onDragStart={(e) => handleOnDrag(e, "Watchlist")}>
+            Watchlist
         </div>
+        <div draggable onDragStart={(e) => handleOnDrag(e, "Stock Chart")}>
+            Stock Chart
+        </div>
+        <div className="border border-black" onDrop={handleOnDrop} onDragOver={handleDragOver}>
+            {widgets.map((widget, index) => (
+                <div kay={index}>
+                    {widget}
+                </div>
+            ))}
+
+        </div>
+        {/* 
         <div className='bg-white flex flex-auto items-center'>
             <CandleStickChart ticker={response} width={928} height={600}/> 
-        </div>
+        </div> */}
     </div>
     );
 }

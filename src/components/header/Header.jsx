@@ -1,18 +1,25 @@
-import PathwayContext from '../../PathwayContext'
-import { Fragment, useContext, useState} from 'react'
+import { Fragment, useContext, useState, useEffect} from 'react'
 import { Disclosure, Menu, Transition } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
 import DarkModeSwitcher from './DarkModeSwitcher'
 import { ReactComponent as Logo } from '../../assets/Changed_Logo.svg'
 import { useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
 import useAuth from '../../hooks/useAuth';
+import usePath from '../../hooks/usePath'
+
+const initialPathway = [
+  { name: 'Home', href: '/', current: false, show: true, requireAuth: false},
+  { name: 'Login', href: '/login', current: false, show: false, requireAuth: false},
+  { name: 'Signup', href: '/signup', current: false, show: false, requireAuth: false},
+  { name: 'Stocks', href: '/login/stocks', current: false, show: true, requireAuth: true},
+]
 
 export default function Header() {
-  const { pathway } = useContext(PathwayContext)
   const navigate = useNavigate()
-  const [ currentRoute, setCurrentRoute ] = useState()
-  const { authenticated, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth()
+  const { path } = usePath()
+
+  const [pathway, setPathway] = useState(initialPathway)
 
   const user = [
     { name: 'Profile', href: '#', current: false },
@@ -20,14 +27,14 @@ export default function Header() {
   ]
 
   useEffect(() => {
-    if(pathway){
-      for(var i=0; i < pathway.length; i++){
-        if(pathway[i].current){
-          setCurrentRoute(pathway[i].href)
-        }
+    let temp_pathway = initialPathway.slice()
+    for(var i=0; i < temp_pathway.length; i++){
+      if(temp_pathway[i].href === path){
+        temp_pathway[i].current = true
       }
     }
-  },[pathway])
+    setPathway(temp_pathway)
+  }, [path])
   
   function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -63,7 +70,7 @@ export default function Header() {
                   <div className="hidden sm:ml-6 sm:block">
                     <div className="flex space-x-4">
                       {pathway.map((item) => (
-                        item.show && (!item.requireAuth || (item.requireAuth && authenticated)) &&
+                        item.show && (!item.requireAuth || (item.requireAuth && isAuthenticated === true)) &&
                           <a key={item.name} href={item.href} className={classNames(item.current ? 'bg-secondary text-text dark:bg-secondary dark:text-text ' : 'text-reverse-text bg-primary hover:bg-secondary hover:text-text','rounded-md px-3 py-2 text-sm font-medium')}aria-current={item.current ? 'page' : undefined}>
                             {item.name}
                           </a>
@@ -72,17 +79,15 @@ export default function Header() {
                   </div>
                 </div>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                  {!authenticated ?
+                  {isAuthenticated === false ?
                   <div className='flex space-x-4'>
-                    {currentRoute && currentRoute !== '/login' ?
-                      <a href="/login" className='bg-secondary text-text dark:bg-secondary dark:text-text hover:bg-primary hover:text-reverse-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
+                    {path !== '/login' ?
+                      <a href="/login" className='bg-primary text-text dark:bg-primary dark:text-reverse-tex hover:bg-secondary hover:text-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
                       Login
                       </a> : null
                     }
-                    {currentRoute && currentRoute !== '/signup' ?
-                      <a
-                        href="/signup"
-                        className='hidden md:block bg-primary text-text dark:bg-primary dark:text-reverse-text hover:bg-secondary hover:text-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
+                    {path !== '/signup' ?
+                      <a href="/signup" className='hidden md:block bg-primary text-text dark:bg-primary dark:text-reverse-text hover:bg-secondary hover:text-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
                         <b>Get Started</b> - it's FREE
                       </a> : null
                     }
