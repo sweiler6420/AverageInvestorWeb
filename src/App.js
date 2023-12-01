@@ -2,15 +2,19 @@ import React, { useEffect, useState } from 'react';
 import {Routes, Route, useLocation} from 'react-router-dom'
 import styled from 'styled-components'
 import ErrorsContext from './ErrorsContext'
-import PathwayContext from './PathwayContext'
 import RequireAuth from './components/RequireAuth';
+
+import { PathProvider } from './PathProvider'
 
 import Home from './components/home/Home'
 import Login from './components/authenticate/Login'
 import Recovery from './components/authenticate/Recovery'
 import SignUp from './components/authenticate/SignUp'
 import Chart from './components/authenticated/Chart'
+import ChartV2 from './components/authenticated/Chart2'
 import Header from './components/header/Header';
+
+import './css/react-grid-layout.css'
 
 const AppContainer = styled.div`
   width: 100%;
@@ -35,6 +39,7 @@ export default function App() {
   const [ theme, setTheme ] = useState(localStorage.theme)
   const [ pathway, setPathway ] = useState(pathwayInit)
 
+  document.body.style.overflow = "hidden"
 
   useEffect(() => {
     if (error.length >= 1) {
@@ -42,20 +47,10 @@ export default function App() {
       console.log(error)
     }
   }, [error])
-  
-  useEffect(()=> {
-    let pathway_temp = pathwayInit
-    for (var i=0; i < pathway.length; i++){
-      if(pathway_temp[i].href == location.pathname){
-        pathway_temp[i].current = true
-      }
-    }
-    setPathway(pathway_temp)
-  }, [location])
 
   return (
     <ErrorsContext.Provider value={{error, setError}}>
-      <PathwayContext.Provider value={{pathway, setPathway}}>
+      <PathProvider>
         <AppContainer>
           <Header/>
           <Routes>
@@ -63,10 +58,10 @@ export default function App() {
             <Route path='/login' element={<Login />}></Route>
             <Route path='/signup' element={<SignUp />}></Route>
             <Route path='/login/recovery' element={<Recovery />}></Route>
-            <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<Chart />} /></Route>
+            <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<ChartV2 />} /></Route>
           </Routes>
         </AppContainer>
-      </PathwayContext.Provider>
+      </PathProvider>
     </ErrorsContext.Provider>
   );
 }

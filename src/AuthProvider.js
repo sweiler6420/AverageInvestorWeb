@@ -2,14 +2,14 @@ import { createContext, useState, useEffect } from "react";
 
 const initialValue = {
     "roles": localStorage.getItem('auth_roles'),
-    "access_token": localStorage.getItem('auth_access_token')
+    "access_token": localStorage.getItem('auth_access_token'),
 }
 
 const AuthContext = createContext(initialValue);
 
 export const AuthProvider = ({ children }) => {
     const [auth, setAuth] = useState(initialValue);
-    const [authenticated, setAuthenticated] = useState(localStorage.getItem('auth_access_token') != 'undefined')
+    const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('auth_access_token') != 'undefined')
 
     useEffect(() => {
         localStorage.setItem('auth_roles', auth.roles)
@@ -17,17 +17,17 @@ export const AuthProvider = ({ children }) => {
     }, [auth])
 
     function login(access_token, roles) {
-        setAuth({roles, access_token})
-        setAuthenticated(true)
+        setAuth({"access_token": access_token, "roles": roles})
+        setIsAuthenticated(true)
     }
 
     function logout() {
         setAuth({"access_token": undefined, "roles": undefined})
-        setAuthenticated(false)
+        setIsAuthenticated(false)
     }
 
     return (
-        <AuthContext.Provider value={{ auth, login, logout, authenticated }}>
+        <AuthContext.Provider value={{ auth, isAuthenticated, login, logout }}>
             {children}
         </AuthContext.Provider>
     )
