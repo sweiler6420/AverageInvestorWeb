@@ -13,6 +13,7 @@ import SignUp from './components/authenticate/SignUp'
 import Chart from './components/authenticated/Chart'
 import ChartV2 from './components/authenticated/Chart2'
 import Header from './components/header/Header';
+import News from './components/authenticated/widgets/News'
 
 import './css/react-grid-layout.css'
 
@@ -32,7 +33,8 @@ export default function App() {
     { name: 'Home', href: '/', current: false, show: true, requireAuth: false},
     { name: 'Login', href: '/login', current: false, show: false, requireAuth: false},
     { name: 'Signup', href: '/signup', current: false, show: false, requireAuth: false},
-    { name: 'Stocks', href: '/login/stocks', current: false, show: true, requireAuth: true}]
+    { name: 'Stocks', href: '/login/stocks', current: false, show: true, requireAuth: true},
+    { name: 'TESTING', href: '/login/test', current: false, show: true, requireAuth: true}]
 
   const location = useLocation()
   const [ error, setError ] = useState([])
@@ -59,6 +61,7 @@ export default function App() {
             <Route path='/signup' element={<SignUp />}></Route>
             <Route path='/login/recovery' element={<Recovery />}></Route>
             <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/stocks' element={<ChartV2 />} /></Route>
+            <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}> <Route path='/login/test' element={<News />} /></Route>
           </Routes>
         </AppContainer>
       </PathProvider>

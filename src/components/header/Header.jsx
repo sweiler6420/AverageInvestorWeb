@@ -12,6 +12,7 @@ const initialPathway = [
   { name: 'Login', href: '/login', current: false, show: false, requireAuth: false},
   { name: 'Signup', href: '/signup', current: false, show: false, requireAuth: false},
   { name: 'Stocks', href: '/login/stocks', current: false, show: true, requireAuth: true},
+  { name: 'TESTING', href: '/login/test', current: false, show: true, requireAuth: true},
 ]
 
 export default function Header() {

@@ -7,8 +7,8 @@ export default function useApi() {
     return {
         apiGet: apiGetFunction.bind(null, axiosPrivate),
         apiPost: apiPostFunction.bind(null, axiosPrivate),
+        apiPut: apiPutFunction.bind(null, axiosPrivate),
         // apiDelete: apiCall.bind(null, 'delete'),
-        // apiPut: apiCall.bind(null, 'put'),
         apiLogin: apiLoginFunction.bind(null),
         apiSignUp: apiSignUpFunction.bind(null),
     }
@@ -46,13 +46,9 @@ export const apiSignUpFunction = async (endpoint, _params={})=> {
 }
 
 export const apiGetFunction = async (axiosPrivate,endpoint, _params={})=> {
-    const {rawResponse=false, ...params} = _params
-
-    const uriQuery = `?${URIEncodeObject(params)}`
-    const url = `${endpoint}${uriQuery}`
 
     try{
-        const response = await axiosPrivate.get(url)
+        const response = await axiosPrivate.get(endpoint)
         return {data: response.data}
     } catch (err) {
         console.log(err)
@@ -69,7 +65,7 @@ export const apiPostFunction = async (axiosPrivate, endpoint, _params={})=> {
     const url = `${endpoint}${uriQuery}`
 
     try{
-        const response = await axiosPrivate.get(url)
+        const response = await axiosPrivate.post(url)
         return {data: response.data}
     } catch (err) {
         console.log(err)
@@ -77,6 +73,23 @@ export const apiPostFunction = async (axiosPrivate, endpoint, _params={})=> {
     }
 
 }
+
+export const apiPutFunction = async (axiosPrivate, endpoint, _params={})=> {
+    const {rawResponse=false, ...params} = _params
+    
+    const uriQuery = `?${URIEncodeObject(params)}`
+    const url = `${endpoint}${uriQuery}`
+
+    try{
+        const response = await axiosPrivate.put(url)
+        return {data: response.data}
+    } catch (err) {
+        console.log(err)
+        return {"status": err.request.status, "message": err.message, "error": err.name}
+    }
+
+}
+
 
 function URIEncodeObject(o){
     return Object.entries(o)
