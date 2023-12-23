@@ -52,7 +52,7 @@ export default function ChartV2() {
     }
 
     return (
-        <div className='bg-white dark:bg-black w-screen h-screen'>
+        <div className='bg-background dark:bg-background w-screen h-screen'>
             <Grid rowHeight={30} draggableHandle="#dragMe" onResizeStop={() => {handleResize()}} > 
                 {/* <div key="chart" data-grid={{x: 2, y: 0, w: 8, h: 15, maxW: 10, isBounded: true}} className='overflow-hidden border bg-background-sub dark:bg-background-sub outline outline-primary dark:outline-none dark:shadow-neon-primary-sm focus:bg-background dark:focus:bg-background'>
                     <div ref={chartRef} className="h-full w-full">

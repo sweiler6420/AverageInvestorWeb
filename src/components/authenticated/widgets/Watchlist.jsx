@@ -85,7 +85,7 @@ export default function Chart() {
                         </li>
                         )}>
                         {(provided) =>(
-                            <ul {...provided.droppableProps} ref={provided.innerRef} className='max-w-md'>
+                            <ul {...provided.droppableProps} ref={provided.innerRef} className=''>
                                 {watchlist.map((stock, index) => 
                                     <Draggable className="bg-black" key={stock.stock_id} draggableId={stock.stock_id} index={index}>
                                         {(provided) => (

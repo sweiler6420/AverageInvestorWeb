@@ -146,7 +146,7 @@
 
 /*https://www.realtimecolors.com/dashboard?colors=000000-ffffff-00a6a9-DDDDDD-a5a5a5&fonts=Poppins-Poppins
 https://www.realtimecolors.com/dashboard?colors=ffffff-000000-57fcff-212121-595959&fonts=Poppins-Poppins*/
-@layer base {
+/* @layer base {
   :root {
     --text: #000000;
     --r-text: #FFFFFF;
@@ -165,6 +165,31 @@ https://www.realtimecolors.com/dashboard?colors=ffffff-000000-57fcff-212121-5959
     --background-sub: #111111;
     --background-sub-2: #222222;
     --primary: #57FCFF;
+    --secondary: #858A85;
+    --g-accent: #a1f7a7;
+    --r-accent: #d86969;
+  }
+} */
+
+@layer base {
+  :root {
+    --text: #000000;
+    --r-text: #FFFFFF;
+    --background: #FFFFFF;
+    --background-sub: #DDDDDD;
+    --background-sub-2: #DDDDDD;
+    --primary: #00A6A9;
+    --secondary: #A5A5A5;
+    --g-accent: #085e0e;
+    --r-accent: #962727;
+  }
+  .dark {
+    --text: #FFFFFF;
+    --r-text: #000000;
+    --background: #0e0e11;
+    --background-sub: #161618;
+    --background-sub-2: #636363;
+    --primary: #49DDE0;
     --secondary: #858A85;
     --g-accent: #a1f7a7;
     --r-accent: #d86969;

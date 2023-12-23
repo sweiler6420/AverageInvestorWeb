@@ -77,7 +77,9 @@ export default function Login() {
             };
     
             apiLogin(`v1/login`, payload).then( response => {
-                setResponse(response)
+                if(!!response.access_token){
+                    setResponse(response)
+                }
             })
         }
     }

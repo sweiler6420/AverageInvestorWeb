@@ -83,7 +83,7 @@ export default function Header() {
                   {isAuthenticated === false ?
                   <div className='flex space-x-4'>
                     {path !== '/login' ?
-                      <a href="/login" className='bg-primary text-text dark:bg-primary dark:text-reverse-tex hover:bg-secondary hover:text-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
+                      <a href="/login" className='bg-primary text-text dark:bg-primary dark:text-reverse-text hover:bg-secondary hover:text-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
                       Login
                       </a> : null
                     }

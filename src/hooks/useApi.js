@@ -25,7 +25,6 @@ export const apiLoginFunction = async (endpoint, _params={})=> {
         const response = await axios.post(endpoint, form_data)
         return response.data
     } catch (err) {
-        console.log(err)
         return {"status": err.request.status, "message": err.message, "error": err.name}
     }
 
