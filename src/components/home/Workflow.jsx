@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
+import InteractiveDesktop from './InteractiveDesktop'
 
 export default function Workflow() {
     return (
@@ -13,13 +14,8 @@ export default function Workflow() {
             </h2>
             <div className='flex flex-wrap justify-center'> 
                 <div className='p-2 w-full lg:w-1/2'>
-                    <div className='bg-gradient-to-r from-accent/20 to-primary/20 rounded-lg p-8 h-96 flex items-center justify-center'>
-                        <div className='text-center'>
-                            <h3 className='font-gothic font-medium text-2xl mb-4'>Investment Dashboard</h3>
-                            <p className='font-gothic font-medium text-neutral-600'>
-                                Visual representation of your investment workflow
-                            </p>
-                        </div>
+                    <div className='bg-gradient-to-r from-accent-secondary/10 to-primary/10 rounded-lg p-4 h-96 relative overflow-hidden'>
+                        <InteractiveDesktop />
                     </div>
                 </div>
                 <div className='pt-12 w-full lg:w-1/2'>
