@@ -1,26 +1,41 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, Children } from 'react'
 import BinPackingLayout from '../shared/BinPackingLayout'
 
 const InteractiveDesktop = () => {
-    const [binPackingApi, setBinPackingApi] = useState(null);
+    const binPackingApiRef = useRef(null);
+    const [windowsAdded, setWindowsAdded] = useState(false);
+    const [apiReady, setApiReady] = useState(false);
 
     // Initialize with 3 demo windows for testing
     useEffect(() => {
-        if (binPackingApi) {
-            // Add a delay to ensure container is measured first
-            setTimeout(() => {
+        const api = binPackingApiRef.current;
+        console.log('InteractiveDesktop useEffect triggered:', {
+            binPackingApi: !!api,
+            gridCols: api?.gridCols,
+            gridRows: api?.gridRows,
+            isGridInitialized: api?.isGridInitialized,
+            windowsAdded,
+            apiReady
+        });
+        
+        if (api && api.isGridInitialized && !windowsAdded) {
+            console.log('Grid is initialized, adding windows:', {
+                gridCols: api.gridCols,
+                gridRows: api.gridRows
+            });
                 // Add first demo window
-                binPackingApi.addWindow({
+                api.addWindow({
                     title: 'Bin Packing Window 1',
                     color: 'bg-blue-500',
                     gridX: 0,
                     gridY: 0,
                     gridWidth: 8,
-                    gridHeight: 6
+                    gridHeight: 6,
+                    children: <div className="font-gothic font-medium text-md p-2 mb-10 text-neutral-500">Hello World</div>
                 });
                 
                 // Add second demo window for collision testing
-                binPackingApi.addWindow({
+                api.addWindow({
                     title: 'Bin Packing Window 2',
                     color: 'bg-green-500',
                     gridX: 10,
@@ -29,18 +44,19 @@ const InteractiveDesktop = () => {
                     gridHeight: 4
                 });
                 
-                // Add third demo window for edge testing
-                binPackingApi.addWindow({
-                    title: 'Bin Packing Edge Test',
-                    color: 'bg-red-500',
-                    gridX: 0,
-                    gridY: 8,
-                    gridWidth: 5,
-                    gridHeight: 3
-                });
-            }, 100); // Give container time to measure
+            // Add third demo window for edge testing
+            api.addWindow({
+                title: 'Bin Packing Edge Test',
+                color: 'bg-red-500',
+                gridX: 0,
+                gridY: 8,
+                gridWidth: 5,
+                gridHeight: 3
+            });
+            
+            setWindowsAdded(true);
         }
-    }, [binPackingApi]);
+    }, [windowsAdded, apiReady]);
 
     return (
         <div className="w-full h-full">
@@ -48,11 +64,14 @@ const InteractiveDesktop = () => {
                 cellSize={20}
                 minWindowWidth={4}
                 minWindowHeight={3}
-                maxWindowWidth={20}
-                maxWindowHeight={15}
             >
                 {(api) => {
-                    if (!binPackingApi) setBinPackingApi(api);
+                    // Store the API in ref to avoid infinite loops
+                    binPackingApiRef.current = api;
+                    // Trigger re-check when API is updated
+                    if (api && api.isGridInitialized && !apiReady) {
+                        setApiReady(true);
+                    }
                     return null;
                 }}
             </BinPackingLayout>

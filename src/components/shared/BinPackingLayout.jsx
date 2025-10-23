@@ -3,7 +3,8 @@ import {
     XMarkIcon, 
     MinusIcon, 
     ArrowsPointingOutIcon,
-    ChevronDoubleRightIcon 
+    ChevronDoubleRightIcon,
+    ArrowsPointingInIcon
 } from '@heroicons/react/24/outline'
 
 // Window component (reused from original)
@@ -14,8 +15,10 @@ const Window = ({
     children, 
     isMinimized, 
     isMaximized, 
+    isFullscreen,
     onMinimize, 
     onMaximize, 
+    onFullscreen,
     onClose,
     onDragStart,
     onResizeStart,
@@ -38,13 +41,33 @@ const Window = ({
 
     return (
         <div
-            className={`absolute ${color} rounded-lg shadow-lg border border-white/20 cursor-move select-none ${className}`}
-            style={style}
+            className={`absolute cursor-move select-none ${className}`}
+            style={{
+                ...style,
+                right: '4px',
+                // No padding, background, or outline on outer div - just positioning
+            }}
             onMouseDown={handleMouseDown}
             {...props}
         >
+            {/* Inner div with the visual styling and padding */}
+            <div
+                className="rounded-lg"
+                style={{
+                    width: 'calc(100% - 8px)',  // Subtract 8px total (4px on each side)
+                    height: 'calc(100% - 8px)', // Subtract 8px total (4px on each side)
+                    margin: '4px',              // Center the inner div
+                    outline: '2px solid rgba(5, 15, 1, 0.29)',
+                    boxShadow: '0 8px 32px rgba(8, 8, 8, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(20px)',
+                    background: 'rgba(1, 175, 255, 0.34)',
+                }}
+            >
+            
             {/* Window header */}
-            <div className="bg-black/20 text-white text-sm px-3 py-2 rounded-t-lg flex justify-between items-center window-controls">
+            <div className={`bg-black/20 ${color} text-white text-sm px-3 py-2 rounded-t-lg flex justify-between items-center window-controls`} style={{
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            }}>
                 <span className="font-gothic font-medium truncate">{title}</span>
                 <div className="flex space-x-1">
                     <button 
@@ -66,6 +89,14 @@ const Window = ({
                     <button 
                         onClick={(e) => {
                             e.stopPropagation();
+                            onFullscreen(id);
+                        }}
+                        className="w-3 h-3 bg-blue-400 rounded-full hover:bg-blue-300 transition-colors"
+                        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                    />
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
                             onClose(id);
                         }}
                         className="w-3 h-3 bg-red-400 rounded-full hover:bg-red-300 transition-colors"
@@ -75,29 +106,28 @@ const Window = ({
             </div>
             
             {/* Window content */}
-            {!isMinimized && (
-                <div className="p-2 text-white text-xs flex flex-col overflow-hidden h-full" style={{ height: 'calc(100% - 40px)' }}>
-                    <div className="bg-white/10 rounded p-1 mb-1 flex-1 min-h-0 w-full">
-                        {children || (
-                            <>
-                                <div className="h-1 bg-white/30 rounded mb-1 w-full"></div>
-                                <div className="h-1 bg-white/20 rounded mb-1 w-full"></div>
-                                <div className="h-1 bg-white/15 rounded w-full"></div>
-                            </>
-                        )}
-                    </div>
+            <div className="p-2 text-white text-xs flex flex-col overflow-hidden h-full" style={{ height: 'calc(100% - 40px)' }}>
+                <div className="bg-white/10 rounded p-1 mb-1 flex-1 min-h-0 w-full">
+                    {children || (
+                        <>
+                            <div className="h-1 bg-white/30 rounded mb-1 w-full"></div>
+                            <div className="h-1 bg-white/20 rounded mb-1 w-full"></div>
+                            <div className="h-1 bg-white/15 rounded w-full"></div>
+                        </>
+                    )}
                 </div>
-            )}
+            </div>
             
-            {/* Resize handle */}
-            <div 
-                className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize opacity-60 hover:opacity-100 transition-opacity duration-200 resize-handle"
-                onMouseDown={(e) => {
-                    e.stopPropagation();
-                    onResizeStart(e, id);
-                }}
-            >
-                <ChevronDoubleRightIcon className="w-full h-full text-white transform rotate-45" />
+                {/* Resize handle */}
+                <div 
+                    className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize opacity-60 hover:opacity-100 transition-opacity duration-200 resize-handle"
+                    onMouseDown={(e) => {
+                        e.stopPropagation();
+                        onResizeStart(e, id);
+                    }}
+                >
+                    <ChevronDoubleRightIcon className="w-full h-full text-white transform rotate-45" />
+                </div>
             </div>
         </div>
     );
@@ -109,9 +139,7 @@ const BinPackingLayout = ({
     className = "",
     cellSize = 20,
     minWindowWidth = 4,
-    minWindowHeight = 3,
-    maxWindowWidth = 20,
-    maxWindowHeight = 15
+    minWindowHeight = 3
 }) => {
     const containerRef = useRef(null);
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -121,10 +149,16 @@ const BinPackingLayout = ({
     const finalDragPositionRef = useRef({ gridX: 0, gridY: 0 });
     const [resizingWindow, setResizingWindow] = useState(null);
     const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+    const [fullscreenWindow, setFullscreenWindow] = useState(null);
+    const originalPositionsRef = useRef({});
+    
+    // Separate state for logical grid dimensions (independent of container size)
+    const [logicalGridCols, setLogicalGridCols] = useState(null); // Will be calculated from container
+    const [logicalGridRows, setLogicalGridRows] = useState(null); // Will be calculated from container
 
-    // Calculate grid dimensions
-    const gridCols = Math.floor(containerSize.width / cellSize);
-    const gridRows = Math.floor(containerSize.height / cellSize);
+    // Calculate actual grid dimensions (use logical grid or fallback to container-based)
+    const gridCols = logicalGridCols || Math.max(1, Math.floor(containerSize.width / cellSize));
+    const gridRows = logicalGridRows || Math.max(1, Math.floor(containerSize.height / cellSize));
 
     // Update container size
     useEffect(() => {
@@ -139,6 +173,38 @@ const BinPackingLayout = ({
         window.addEventListener('resize', updateSize);
         return () => window.removeEventListener('resize', updateSize);
     }, []);
+
+    // Initialize and update logical grid dimensions based on container size
+    useEffect(() => {
+        console.log('Grid initialization check:', {
+            containerWidth: containerSize.width,
+            containerHeight: containerSize.height,
+            logicalGridCols,
+            logicalGridRows,
+            cellSize
+        });
+        
+        if (containerSize.width > 0 && containerSize.height > 0) {
+            const newCols = Math.floor(containerSize.width / cellSize);
+            const newRows = Math.floor(containerSize.height / cellSize);
+            
+            // Update grid dimensions if they're different from current values
+            if (logicalGridCols === null || logicalGridRows === null || 
+                logicalGridCols !== newCols || logicalGridRows !== newRows) {
+                console.log(`Updating logical grid dimensions: ${newCols}x${newRows}`);
+                setLogicalGridCols(newCols);
+                setLogicalGridRows(newRows);
+            }
+        }
+    }, [containerSize.width, containerSize.height, logicalGridCols, logicalGridRows, cellSize]);
+
+    // Prevent rendering until grid is properly initialized
+    const isGridInitialized = logicalGridCols !== null && logicalGridRows !== null && gridCols > 1 && gridRows > 1;
+
+    // Log grid dimensions when they change
+    useEffect(() => {
+        console.log(`Current grid dimensions: ${gridCols}x${gridRows}`);
+    }, [gridCols, gridRows]);
 
     // Convert grid coordinates to pixel coordinates
     const gridToPixel = useCallback((gridX, gridY, gridWidth, gridHeight) => {
@@ -168,15 +234,21 @@ const BinPackingLayout = ({
         }
 
         // Check collision with other windows
-        return windows.some(window => {
+        const hasCollision = windows.some(window => {
             if (window.id === excludeWindowId) return false;
             
             // AABB collision detection
-            return !(gridX >= window.gridX + window.gridWidth ||
+            const collides = !(gridX >= window.gridX + window.gridWidth ||
                     gridX + gridWidth <= window.gridX ||
                     gridY >= window.gridY + window.gridHeight ||
                     gridY + gridHeight <= window.gridY);
+            
+            // Collision detected
+            
+            return collides;
         });
+        
+        return hasCollision;
     }, [windows, gridCols, gridRows]);
 
     // Bin Packing Algorithm - Find best position
@@ -193,28 +265,48 @@ const BinPackingLayout = ({
             return { gridX: clampedX, gridY: clampedY };
         }
         
+        // If clamped position is invalid, try to find a valid position
+        // Start with the original target position (before clamping) and search around it
+        const searchCenterX = Math.max(0, Math.min(targetX, gridCols - gridWidth));
+        const searchCenterY = Math.max(0, Math.min(targetY, gridRows - gridHeight));
+        
         // Bin packing: Find nearest valid position using spiral search
-        for (let radius = 1; radius <= 10; radius++) {
+        for (let radius = 1; radius <= Math.max(gridCols, gridRows); radius++) {
             for (let dx = -radius; dx <= radius; dx++) {
                 for (let dy = -radius; dy <= radius; dy++) {
                     if (Math.abs(dx) === radius || Math.abs(dy) === radius) {
-                        const testX = clampedX + dx;
-                        const testY = clampedY + dy;
+                        const testX = searchCenterX + dx;
+                        const testY = searchCenterY + dy;
                         
-                        if (!checkCollision(testX, testY, gridWidth, gridHeight, windowId)) {
-                            return { gridX: testX, gridY: testY };
+                        // Ensure test position is within bounds
+                        if (testX >= 0 && testY >= 0 && 
+                            testX + gridWidth <= gridCols && 
+                            testY + gridHeight <= gridRows) {
+                            
+                            if (!checkCollision(testX, testY, gridWidth, gridHeight, windowId)) {
+                                return { gridX: testX, gridY: testY };
+                            }
                         }
                     }
                 }
             }
         }
         
-        // Fallback to original position
+        // If no valid position found, return the clamped position (even if it collides)
         return { gridX: clampedX, gridY: clampedY };
     }, [pixelToGrid, checkCollision, gridCols, gridRows]);
 
     // Add window with bin packing placement
     const addWindow = useCallback((windowConfig) => {
+        console.log('Adding window:', {
+            windowConfig,
+            currentGridCols: gridCols,
+            currentGridRows: gridRows,
+            logicalGridCols,
+            logicalGridRows,
+            containerSize
+        });
+        
         // Get current container size directly from DOM to avoid state timing issues
         let currentGridCols = gridCols;
         let currentGridRows = gridRows;
@@ -223,6 +315,7 @@ const BinPackingLayout = ({
             const rect = containerRef.current.getBoundingClientRect();
             currentGridCols = Math.floor(rect.width / cellSize);
             currentGridRows = Math.floor(rect.height / cellSize);
+            console.log('Using DOM measurements:', { currentGridCols, currentGridRows });
         }
         
         const newWindow = {
@@ -233,8 +326,6 @@ const BinPackingLayout = ({
             gridY: windowConfig.gridY || 0,
             gridWidth: Math.max(windowConfig.gridWidth || minWindowWidth, minWindowWidth),
             gridHeight: Math.max(windowConfig.gridHeight || minWindowHeight, minWindowHeight),
-            isMinimized: false,
-            isMaximized: false,
             children: windowConfig.children || null
         };
 
@@ -287,6 +378,14 @@ const BinPackingLayout = ({
         newWindow.gridX = finalGridX;
         newWindow.gridY = finalGridY;
 
+        console.log('Final window position:', {
+            windowId: newWindow.id,
+            finalGridX,
+            finalGridY,
+            gridWidth: newWindow.gridWidth,
+            gridHeight: newWindow.gridHeight
+        });
+
         // Add to state
         setWindows(prev => [...prev, newWindow]);
 
@@ -308,22 +407,120 @@ const BinPackingLayout = ({
         setWindows(prev => prev.filter(w => w.id !== windowId));
     }, []);
 
-    // Minimize window
+    // Minimize window - shrink to minimum size
     const minimizeWindow = useCallback((windowId) => {
         setWindows(prev => prev.map(w => 
-            w.id === windowId ? { ...w, isMinimized: !w.isMinimized } : w
+            w.id === windowId 
+                ? { ...w, gridWidth: minWindowWidth, gridHeight: minWindowHeight }
+                : w
         ));
-    }, []);
+    }, [minWindowWidth, minWindowHeight]);
 
-    // Maximize window
+    // Maximize window - intelligently expand to fill available space
     const maximizeWindow = useCallback((windowId) => {
-        setWindows(prev => prev.map(w => 
-            w.id === windowId ? { ...w, isMaximized: !w.isMaximized } : w
-        ));
-    }, []);
+        setWindows(prev => prev.map(w => {
+            if (w.id === windowId) {
+                let newGridX = w.gridX;
+                let newGridY = w.gridY;
+                let newGridWidth = w.gridWidth;
+                let newGridHeight = w.gridHeight;
+                
+                // Step 1: Move up as far as possible until collision
+                for (let testY = w.gridY - 1; testY >= 0; testY--) {
+                    if (!checkCollision(w.gridX, testY, w.gridWidth, w.gridHeight, windowId)) {
+                        newGridY = testY;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Step 2: Move left as far as possible until collision
+                for (let testX = w.gridX - 1; testX >= 0; testX--) {
+                    if (!checkCollision(testX, newGridY, w.gridWidth, w.gridHeight, windowId)) {
+                        newGridX = testX;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Step 3: Scale right as far as possible until collision
+                for (let testWidth = w.gridWidth + 1; testWidth <= gridCols - newGridX; testWidth++) {
+                    if (!checkCollision(newGridX, newGridY, testWidth, newGridHeight, windowId)) {
+                        newGridWidth = testWidth;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Step 4: Scale down as far as possible until collision
+                for (let testHeight = w.gridHeight + 1; testHeight <= gridRows - newGridY; testHeight++) {
+                    if (!checkCollision(newGridX, newGridY, newGridWidth, testHeight, windowId)) {
+                        newGridHeight = testHeight;
+                    } else {
+                        break;
+                    }
+                }
+                
+                return {
+                    ...w,
+                    gridX: newGridX,
+                    gridY: newGridY,
+                    gridWidth: newGridWidth,
+                    gridHeight: newGridHeight
+                };
+            }
+            return w;
+        }));
+    }, [gridCols, gridRows, checkCollision]);
+
+    // Fullscreen window - toggle between fullscreen and original position
+    const toggleFullscreen = useCallback((windowId) => {
+        setWindows(prev => prev.map(w => {
+            if (w.id === windowId) {
+                if (fullscreenWindow === windowId) {
+                    // Exit fullscreen - restore original position
+                    const original = originalPositionsRef.current[windowId];
+                    if (original) {
+                        return {
+                            ...w,
+                            gridX: original.gridX,
+                            gridY: original.gridY,
+                            gridWidth: original.gridWidth,
+                            gridHeight: original.gridHeight
+                        };
+                    }
+                    // If no original position saved, keep current state
+                    return w;
+                } else {
+                    // Enter fullscreen - save original position and move to (0,0) with full size
+                    originalPositionsRef.current[windowId] = {
+                        gridX: w.gridX,
+                        gridY: w.gridY,
+                        gridWidth: w.gridWidth,
+                        gridHeight: w.gridHeight
+                    };
+                    
+                    return {
+                        ...w,
+                        gridX: 0,
+                        gridY: 0,
+                        gridWidth: gridCols,
+                        gridHeight: gridRows
+                    };
+                }
+            }
+            return w;
+        }));
+        
+        // Toggle fullscreen state
+        setFullscreenWindow(prev => prev === windowId ? null : windowId);
+    }, [gridCols, gridRows, fullscreenWindow]);
 
     // Drag handlers
     const handleDragStart = useCallback((e, windowId) => {
+        // Don't allow dragging if window is in fullscreen
+        if (fullscreenWindow === windowId) return;
+        
         e.preventDefault();
         e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
@@ -334,9 +531,12 @@ const BinPackingLayout = ({
         });
         // Reset final drag position
         finalDragPositionRef.current = { gridX: 0, gridY: 0 };
-    }, []);
+    }, [fullscreenWindow]);
 
     const handleResizeStart = useCallback((e, windowId) => {
+        // Don't allow resizing if window is in fullscreen
+        if (fullscreenWindow === windowId) return;
+        
         e.preventDefault();
         e.stopPropagation();
         const windowElement = document.querySelector(`[data-window-id="${windowId}"]`);
@@ -350,7 +550,7 @@ const BinPackingLayout = ({
                 height: rect.height
             });
         }
-    }, []);
+    }, [fullscreenWindow]);
 
     const handleMouseMove = useCallback((e) => {
         if (!containerRef.current) return;
@@ -493,36 +693,195 @@ const BinPackingLayout = ({
         }
     }, [draggedWindow, resizingWindow, handleMouseMove, handleMouseUp]);
 
+    // Grid compression algorithm - reduces grid size while maintaining proportional window sizes
+    const compressGrid = useCallback((newGridCols, newGridRows) => {
+        if (newGridCols <= 0 || newGridRows <= 0) return;
+        
+        console.log(`Grid resizing: ${gridCols}x${gridRows} → ${newGridCols}x${newGridRows}`);
+        
+        // Update the logical grid dimensions first
+        setLogicalGridCols(newGridCols);
+        setLogicalGridRows(newGridRows);
+        
+        setWindows(prev => {
+            const updatedWindows = [...prev];
+            
+            // Handle horizontal compression
+            if (newGridCols < gridCols) {
+                const widthReduction = gridCols - newGridCols;
+                
+                // Calculate total width usage of all windows
+                const totalWidthUsed = updatedWindows.reduce((sum, window) => sum + window.gridWidth, 0);
+                
+                // Sort windows by their width proportion (largest first)
+                const windowsWithProportions = updatedWindows.map(window => ({
+                    ...window,
+                    widthProportion: window.gridWidth / totalWidthUsed
+                })).sort((a, b) => b.widthProportion - a.widthProportion);
+                
+                // Distribute width reduction proportionally
+                let remainingReduction = widthReduction;
+                for (const windowData of windowsWithProportions) {
+                    if (remainingReduction <= 0) break;
+                    
+                    const reductionForThisWindow = Math.min(
+                        Math.ceil(windowData.widthProportion * widthReduction),
+                        remainingReduction,
+                        windowData.gridWidth - minWindowWidth // Don't go below minimum
+                    );
+                    
+                    if (reductionForThisWindow > 0) {
+                        const windowIndex = updatedWindows.findIndex(w => w.id === windowData.id);
+                        if (windowIndex !== -1) {
+                            updatedWindows[windowIndex] = {
+                                ...updatedWindows[windowIndex],
+                                gridWidth: Math.max(
+                                    updatedWindows[windowIndex].gridWidth - reductionForThisWindow,
+                                    minWindowWidth
+                                )
+                            };
+                            remainingReduction -= reductionForThisWindow;
+                        }
+                    }
+                }
+                
+                // Clamp windows that are now out of bounds horizontally
+                updatedWindows.forEach(window => {
+                    if (window.gridX + window.gridWidth > newGridCols) {
+                        window.gridX = Math.max(0, newGridCols - window.gridWidth);
+                    }
+                });
+            }
+            
+            // Handle vertical compression
+            if (newGridRows < gridRows) {
+                const heightReduction = gridRows - newGridRows;
+                
+                // Calculate total height usage of all windows
+                const totalHeightUsed = updatedWindows.reduce((sum, window) => sum + window.gridHeight, 0);
+                
+                // Sort windows by their height proportion (largest first)
+                const windowsWithProportions = updatedWindows.map(window => ({
+                    ...window,
+                    heightProportion: window.gridHeight / totalHeightUsed
+                })).sort((a, b) => b.heightProportion - a.heightProportion);
+                
+                // Distribute height reduction proportionally
+                let remainingReduction = heightReduction;
+                for (const windowData of windowsWithProportions) {
+                    if (remainingReduction <= 0) break;
+                    
+                    const reductionForThisWindow = Math.min(
+                        Math.ceil(windowData.heightProportion * heightReduction),
+                        remainingReduction,
+                        windowData.gridHeight - minWindowHeight // Don't go below minimum
+                    );
+                    
+                    if (reductionForThisWindow > 0) {
+                        const windowIndex = updatedWindows.findIndex(w => w.id === windowData.id);
+                        if (windowIndex !== -1) {
+                            updatedWindows[windowIndex] = {
+                                ...updatedWindows[windowIndex],
+                                gridHeight: Math.max(
+                                    updatedWindows[windowIndex].gridHeight - reductionForThisWindow,
+                                    minWindowHeight
+                                )
+                            };
+                            remainingReduction -= reductionForThisWindow;
+                        }
+                    }
+                }
+                
+                // Clamp windows that are now out of bounds vertically
+                updatedWindows.forEach(window => {
+                    if (window.gridY + window.gridHeight > newGridRows) {
+                        window.gridY = Math.max(0, newGridRows - window.gridHeight);
+                    }
+                });
+            }
+            
+            // Use bin packing to reposition windows that might now have collisions
+            const finalWindows = updatedWindows.map(window => {
+                // Check if this window collides with others
+                const hasCollision = updatedWindows.some(otherWindow => {
+                    if (otherWindow.id === window.id) return false;
+                    
+                    return !(window.gridX >= otherWindow.gridX + otherWindow.gridWidth ||
+                            window.gridX + window.gridWidth <= otherWindow.gridX ||
+                            window.gridY >= otherWindow.gridY + otherWindow.gridHeight ||
+                            window.gridY + window.gridHeight <= otherWindow.gridY);
+                });
+                
+                if (hasCollision) {
+                    // Use existing findBestPosition algorithm to find a valid position
+                    const { gridX, gridY } = findBestPosition(
+                        window.id,
+                        window.gridX * cellSize,
+                        window.gridY * cellSize,
+                        window.gridWidth,
+                        window.gridHeight
+                    );
+                    
+                    return {
+                        ...window,
+                        gridX,
+                        gridY
+                    };
+                }
+                
+                return window;
+            });
+            
+            return finalWindows;
+        });
+        
+        // Update the container size to reflect new grid dimensions
+        const newWidth = newGridCols * cellSize;
+        const newHeight = newGridRows * cellSize;
+        setContainerSize({ width: newWidth, height: newHeight });
+    }, [gridCols, gridRows, minWindowWidth, minWindowHeight, cellSize, findBestPosition]);
+
     // Expose methods to parent
     useEffect(() => {
+        console.log('Exposing API to parent:', { gridCols, gridRows, isGridInitialized });
         if (children && typeof children === 'function') {
             children({
                 addWindow,
                 removeWindow,
                 minimizeWindow,
                 maximizeWindow,
-                windows
+                toggleFullscreen,
+                compressGrid,
+                windows,
+                gridCols,
+                gridRows,
+                isGridInitialized
             });
         }
-    }, [children, addWindow, removeWindow, minimizeWindow, maximizeWindow, windows]);
+    }, [children, addWindow, removeWindow, minimizeWindow, maximizeWindow, toggleFullscreen, compressGrid, windows, gridCols, gridRows, isGridInitialized]);
 
     return (
         <div ref={containerRef} className={`bin-packing-layout w-full h-full min-h-96 relative ${className}`}>
-            {/* Grid background */}
-            {containerSize.width > 0 && containerSize.height > 0 && (
-                <div className="absolute inset-0 opacity-10">
-                    <svg width="100%" height="100%">
-                        {/* Vertical grid lines */}
-                        {Array.from({ length: gridCols + 1 }).map((_, i) => (
-                            <line key={`v-${i}`} x1={i * cellSize} y1={0} x2={i * cellSize} y2={containerSize.height} stroke="#ccc" strokeWidth="1" />
-                        ))}
-                        {/* Horizontal grid lines */}
-                        {Array.from({ length: gridRows + 1 }).map((_, i) => (
-                            <line key={`h-${i}`} x1={0} y1={i * cellSize} x2={containerSize.width} y2={i * cellSize} stroke="#ccc" strokeWidth="1" />
-                        ))}
-                    </svg>
-                </div>
-            )}
+            {/* Only render grid and windows when properly initialized */}
+            {isGridInitialized && (
+                <>
+                    {/* Grid background */}
+                    <div className="absolute inset-0 opacity-20 border-2 border-blue-500" style={{
+                        width: `${gridCols * cellSize}px`,
+                        height: `${gridRows * cellSize}px`,
+                        border: '2px solid #3b82f6'
+                    }}>
+                        <svg width="100%" height="100%">
+                            {/* Vertical grid lines */}
+                            {Array.from({ length: gridCols + 1 }).map((_, i) => (
+                                <line key={`v-${i}`} x1={i * cellSize} y1={0} x2={i * cellSize} y2={gridRows * cellSize} stroke="#3b82f6" strokeWidth="1" />
+                            ))}
+                            {/* Horizontal grid lines */}
+                            {Array.from({ length: gridRows + 1 }).map((_, i) => (
+                                <line key={`h-${i}`} x1={0} y1={i * cellSize} x2={gridCols * cellSize} y2={i * cellSize} stroke="#3b82f6" strokeWidth="1" />
+                            ))}
+                        </svg>
+                    </div>
             
             {/* Windows */}
             {windows.map(window => {
@@ -533,10 +892,10 @@ const BinPackingLayout = ({
                         id={window.id}
                         title={window.title}
                         color={window.color}
-                        isMinimized={window.isMinimized}
-                        isMaximized={window.isMaximized}
+                        isFullscreen={fullscreenWindow === window.id}
                         onMinimize={minimizeWindow}
                         onMaximize={maximizeWindow}
+                        onFullscreen={toggleFullscreen}
                         onClose={removeWindow}
                         onDragStart={handleDragStart}
                         onResizeStart={handleResizeStart}
@@ -545,7 +904,7 @@ const BinPackingLayout = ({
                             top: y,
                             width: width,
                             height: height,
-                            zIndex: draggedWindow === window.id ? 10 : 1
+                            zIndex: fullscreenWindow === window.id ? 20 : (draggedWindow === window.id ? 10 : 1)
                         }}
                         {...{ 'data-window-id': window.id }}
                     >
@@ -554,10 +913,12 @@ const BinPackingLayout = ({
                 );
             })}
             
-            {/* Scale indicator */}
-            {/* <div className="absolute bottom-2 right-2 text-xs text-gray-600 font-gothic bg-white/80 px-2 py-1 rounded">
-                {gridCols} × {gridRows} grid | Bin Packing Layout
-            </div> */}
+                    {/* Scale indicator */}
+                    {/* <div className="absolute bottom-2 right-2 text-xs text-gray-600 font-gothic bg-white/80 px-2 py-1 rounded">
+                        {gridCols} × {gridRows} grid | Bin Packing Layout
+                    </div> */}
+                </>
+            )}
         </div>
     );
 };
