@@ -12,9 +12,9 @@ export default function Workflow() {
                     Technology
                 </span>
             </h2>
-            <div className='flex flex-wrap justify-center'> 
+            <div className='flex flex-wrap justify-center lg:items-stretch'> 
                 <div className='p-2 w-full lg:w-1/2'>
-                    <div className='bg-gradient-to-r from-accent-secondary/10 to-primary/10 rounded-lg p-4 h-96 relative overflow-hidden'>
+                    <div className='bg-gradient-to-r from-accent-secondary/10 to-primary/10 rounded-lg p-4 relative overflow-hidden h-96 lg:h-full'>
                         <InteractiveDesktop />
                     </div>
                 </div>

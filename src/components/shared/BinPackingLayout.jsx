@@ -181,17 +181,29 @@ const BinPackingLayout = ({
 
     // Bin Packing Algorithm - Find best position
     const findBestPosition = useCallback((windowId, pixelX, pixelY, gridWidth, gridHeight) => {
+        console.log(`findBestPosition called for ${windowId}:`);
+        console.log(`  Input: pixel(${pixelX}, ${pixelY}) size(${gridWidth}x${gridHeight})`);
+        console.log(`  Grid bounds: ${gridCols}x${gridRows}`);
 
         // Snap to grid
         const { gridX: targetX, gridY: targetY } = pixelToGrid(pixelX, pixelY);
+        console.log(`  Converted to grid: (${targetX}, ${targetY})`);
+        
         // Clamp to valid bounds
         const clampedX = Math.max(0, Math.min(targetX, gridCols - gridWidth));
         const clampedY = Math.max(0, Math.min(targetY, gridRows - gridHeight));
+        console.log(`  Clamped to: (${clampedX}, ${clampedY})`);
         
         // Check if this position is valid
-        if (!checkCollision(clampedX, clampedY, gridWidth, gridHeight, windowId)) {
+        const hasCollision = checkCollision(clampedX, clampedY, gridWidth, gridHeight, windowId);
+        console.log(`  Clamped position collision check: ${hasCollision}`);
+        
+        if (!hasCollision) {
+            console.log(`  Returning clamped position: (${clampedX}, ${clampedY})`);
             return { gridX: clampedX, gridY: clampedY };
         }
+        
+        console.log(`  Searching for alternative position...`);
         
         // Bin packing: Find nearest valid position using spiral search
         for (let radius = 1; radius <= 10; radius++) {
@@ -202,6 +214,7 @@ const BinPackingLayout = ({
                         const testY = clampedY + dy;
                         
                         if (!checkCollision(testX, testY, gridWidth, gridHeight, windowId)) {
+                            console.log(`  Found alternative position: (${testX}, ${testY})`);
                             return { gridX: testX, gridY: testY };
                         }
                     }
@@ -209,12 +222,18 @@ const BinPackingLayout = ({
             }
         }
         
+        console.log(`  No alternative found, returning clamped position: (${clampedX}, ${clampedY})`);
         // Fallback to original position
         return { gridX: clampedX, gridY: clampedY };
     }, [pixelToGrid, checkCollision, gridCols, gridRows]);
 
     // Add window with bin packing placement
     const addWindow = useCallback((windowConfig) => {
+        console.log(`=== ADDING WINDOW: ${windowConfig.title} ===`);
+        console.log(`Requested position: grid(${windowConfig.gridX || 0}, ${windowConfig.gridY || 0})`);
+        console.log(`Grid dimensions: ${gridCols}x${gridRows}`);
+        console.log(`Current windows count: ${windows.length}`);
+        
         const newWindow = {
             id: `window_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             title: windowConfig.title || 'New Window',
@@ -228,35 +247,49 @@ const BinPackingLayout = ({
             children: windowConfig.children || null
         };
 
-        // Use bin packing to find valid position - start from top-left and search systematically
-        let bestPosition = { gridX: 0, gridY: 0 };
-        let foundValidPosition = false;
+        console.log(`Window config: grid(${newWindow.gridX}, ${newWindow.gridY}) size(${newWindow.gridWidth}x${newWindow.gridHeight})`);
 
-        // First try the requested position
-        if (!checkCollision(newWindow.gridX, newWindow.gridY, newWindow.gridWidth, newWindow.gridHeight, newWindow.id)) {
-            bestPosition = { gridX: newWindow.gridX, gridY: newWindow.gridY };
-            foundValidPosition = true;
-            console.log(`Window ${newWindow.title} placed at requested position: grid(${newWindow.gridX}, ${newWindow.gridY})`);
-        } else {
-            console.log(`Window ${newWindow.title} requested position grid(${newWindow.gridX}, ${newWindow.gridY}) has collision, searching for alternative`);
-            // If requested position is invalid, search systematically from top-left
-            for (let y = 0; y <= gridRows - newWindow.gridHeight && !foundValidPosition; y++) {
-                for (let x = 0; x <= gridCols - newWindow.gridWidth && !foundValidPosition; x++) {
-                    if (!checkCollision(x, y, newWindow.gridWidth, newWindow.gridHeight, newWindow.id)) {
-                        bestPosition = { gridX: x, gridY: y };
-                        foundValidPosition = true;
-                        console.log(`Window ${newWindow.title} placed at alternative position: grid(${x}, ${y})`);
-                    }
-                }
-            }
-        }
+        // Use findBestPosition to get the optimal placement
+        const { x: pixelX, y: pixelY } = gridToPixel(newWindow.gridX, newWindow.gridY, newWindow.gridWidth, newWindow.gridHeight);
+        console.log(`Converted to pixel: (${pixelX}, ${pixelY})`);
         
-        newWindow.gridX = bestPosition.gridX;
-        newWindow.gridY = bestPosition.gridY;
+        const { gridX: finalGridX, gridY: finalGridY } = findBestPosition(
+            newWindow.id,
+            pixelX,
+            pixelY,
+            newWindow.gridWidth,
+            newWindow.gridHeight
+        );
+        
+        console.log(`findBestPosition returned: grid(${finalGridX}, ${finalGridY})`);
 
-        setWindows(prev => [...prev, newWindow]);
+        // Update the window with the final position
+        newWindow.gridX = finalGridX;
+        newWindow.gridY = finalGridY;
+
+        console.log(`Final window position: grid(${newWindow.gridX}, ${newWindow.gridY})`);
+
+        // Add to state
+        setWindows(prev => {
+            console.log(`Adding window to state. Previous count: ${prev.length}`);
+            return [...prev, newWindow];
+        });
+
+        // Set position directly in DOM after a brief delay to ensure the element exists
+        setTimeout(() => {
+            const windowElement = document.querySelector(`[data-window-id="${newWindow.id}"]`);
+            if (windowElement) {
+                const { x: finalPixelX, y: finalPixelY } = gridToPixel(finalGridX, finalGridY, newWindow.gridWidth, newWindow.gridHeight);
+                console.log(`Setting DOM position: pixel(${finalPixelX}, ${finalPixelY})`);
+                windowElement.style.left = `${finalPixelX}px`;
+                windowElement.style.top = `${finalPixelY}px`;
+            } else {
+                console.log(`Window element not found for ID: ${newWindow.id}`);
+            }
+        }, 0);
+
         return newWindow.id;
-    }, [checkCollision, minWindowWidth, minWindowHeight, gridCols, gridRows]);
+    }, [findBestPosition, gridToPixel, minWindowWidth, minWindowHeight, gridCols, gridRows, windows.length]);
 
     // Remove window
     const removeWindow = useCallback((windowId) => {
@@ -482,6 +515,7 @@ const BinPackingLayout = ({
             {/* Windows */}
             {windows.map(window => {
                 const { x, y, width, height } = gridToPixel(window.gridX, window.gridY, window.gridWidth, window.gridHeight);
+                console.log(`Rendering window ${window.title}: grid(${window.gridX}, ${window.gridY}) -> pixel(${x}, ${y})`);
                 return (
                     <Window
                         key={window.id}
