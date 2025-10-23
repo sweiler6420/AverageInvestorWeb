@@ -181,29 +181,17 @@ const BinPackingLayout = ({
 
     // Bin Packing Algorithm - Find best position
     const findBestPosition = useCallback((windowId, pixelX, pixelY, gridWidth, gridHeight) => {
-        console.log(`findBestPosition called for ${windowId}:`);
-        console.log(`  Input: pixel(${pixelX}, ${pixelY}) size(${gridWidth}x${gridHeight})`);
-        console.log(`  Grid bounds: ${gridCols}x${gridRows}`);
-
         // Snap to grid
         const { gridX: targetX, gridY: targetY } = pixelToGrid(pixelX, pixelY);
-        console.log(`  Converted to grid: (${targetX}, ${targetY})`);
         
         // Clamp to valid bounds
         const clampedX = Math.max(0, Math.min(targetX, gridCols - gridWidth));
         const clampedY = Math.max(0, Math.min(targetY, gridRows - gridHeight));
-        console.log(`  Clamped to: (${clampedX}, ${clampedY})`);
         
         // Check if this position is valid
-        const hasCollision = checkCollision(clampedX, clampedY, gridWidth, gridHeight, windowId);
-        console.log(`  Clamped position collision check: ${hasCollision}`);
-        
-        if (!hasCollision) {
-            console.log(`  Returning clamped position: (${clampedX}, ${clampedY})`);
+        if (!checkCollision(clampedX, clampedY, gridWidth, gridHeight, windowId)) {
             return { gridX: clampedX, gridY: clampedY };
         }
-        
-        console.log(`  Searching for alternative position...`);
         
         // Bin packing: Find nearest valid position using spiral search
         for (let radius = 1; radius <= 10; radius++) {
@@ -214,7 +202,6 @@ const BinPackingLayout = ({
                         const testY = clampedY + dy;
                         
                         if (!checkCollision(testX, testY, gridWidth, gridHeight, windowId)) {
-                            console.log(`  Found alternative position: (${testX}, ${testY})`);
                             return { gridX: testX, gridY: testY };
                         }
                     }
@@ -222,17 +209,21 @@ const BinPackingLayout = ({
             }
         }
         
-        console.log(`  No alternative found, returning clamped position: (${clampedX}, ${clampedY})`);
         // Fallback to original position
         return { gridX: clampedX, gridY: clampedY };
     }, [pixelToGrid, checkCollision, gridCols, gridRows]);
 
     // Add window with bin packing placement
     const addWindow = useCallback((windowConfig) => {
-        console.log(`=== ADDING WINDOW: ${windowConfig.title} ===`);
-        console.log(`Requested position: grid(${windowConfig.gridX || 0}, ${windowConfig.gridY || 0})`);
-        console.log(`Grid dimensions: ${gridCols}x${gridRows}`);
-        console.log(`Current windows count: ${windows.length}`);
+        // Get current container size directly from DOM to avoid state timing issues
+        let currentGridCols = gridCols;
+        let currentGridRows = gridRows;
+        
+        if (containerRef.current && (gridCols === 0 || gridRows === 0)) {
+            const rect = containerRef.current.getBoundingClientRect();
+            currentGridCols = Math.floor(rect.width / cellSize);
+            currentGridRows = Math.floor(rect.height / cellSize);
+        }
         
         const newWindow = {
             id: `window_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -247,44 +238,65 @@ const BinPackingLayout = ({
             children: windowConfig.children || null
         };
 
-        console.log(`Window config: grid(${newWindow.gridX}, ${newWindow.gridY}) size(${newWindow.gridWidth}x${newWindow.gridHeight})`);
-
         // Use findBestPosition to get the optimal placement
         const { x: pixelX, y: pixelY } = gridToPixel(newWindow.gridX, newWindow.gridY, newWindow.gridWidth, newWindow.gridHeight);
-        console.log(`Converted to pixel: (${pixelX}, ${pixelY})`);
         
-        const { gridX: finalGridX, gridY: finalGridY } = findBestPosition(
+        // Create a temporary findBestPosition with current grid dimensions
+        const tempFindBestPosition = (windowId, pixelX, pixelY, gridWidth, gridHeight) => {
+            // Snap to grid
+            const { gridX: targetX, gridY: targetY } = pixelToGrid(pixelX, pixelY);
+            
+            // Clamp to valid bounds
+            const clampedX = Math.max(0, Math.min(targetX, currentGridCols - gridWidth));
+            const clampedY = Math.max(0, Math.min(targetY, currentGridRows - gridHeight));
+            
+            // Check if this position is valid
+            if (!checkCollision(clampedX, clampedY, gridWidth, gridHeight, windowId)) {
+                return { gridX: clampedX, gridY: clampedY };
+            }
+            
+            // Bin packing: Find nearest valid position using spiral search
+            for (let radius = 1; radius <= 10; radius++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    for (let dy = -radius; dy <= radius; dy++) {
+                        if (Math.abs(dx) === radius || Math.abs(dy) === radius) {
+                            const testX = clampedX + dx;
+                            const testY = clampedY + dy;
+                            
+                            if (!checkCollision(testX, testY, gridWidth, gridHeight, windowId)) {
+                                return { gridX: testX, gridY: testY };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Fallback to original position
+            return { gridX: clampedX, gridY: clampedY };
+        };
+        
+        const { gridX: finalGridX, gridY: finalGridY } = tempFindBestPosition(
             newWindow.id,
             pixelX,
             pixelY,
             newWindow.gridWidth,
             newWindow.gridHeight
         );
-        
-        console.log(`findBestPosition returned: grid(${finalGridX}, ${finalGridY})`);
 
         // Update the window with the final position
         newWindow.gridX = finalGridX;
         newWindow.gridY = finalGridY;
 
-        console.log(`Final window position: grid(${newWindow.gridX}, ${newWindow.gridY})`);
-
         // Add to state
-        setWindows(prev => {
-            console.log(`Adding window to state. Previous count: ${prev.length}`);
-            return [...prev, newWindow];
-        });
+        setWindows(prev => [...prev, newWindow]);
 
         // Set position directly in DOM after a brief delay to ensure the element exists
         setTimeout(() => {
             const windowElement = document.querySelector(`[data-window-id="${newWindow.id}"]`);
             if (windowElement) {
                 const { x: finalPixelX, y: finalPixelY } = gridToPixel(finalGridX, finalGridY, newWindow.gridWidth, newWindow.gridHeight);
-                console.log(`Setting DOM position: pixel(${finalPixelX}, ${finalPixelY})`);
                 windowElement.style.left = `${finalPixelX}px`;
                 windowElement.style.top = `${finalPixelY}px`;
-            } else {
-                console.log(`Window element not found for ID: ${newWindow.id}`);
             }
         }, 0);
 
@@ -495,7 +507,7 @@ const BinPackingLayout = ({
     }, [children, addWindow, removeWindow, minimizeWindow, maximizeWindow, windows]);
 
     return (
-        <div ref={containerRef} className={`bin-packing-layout w-full h-full relative ${className}`}>
+        <div ref={containerRef} className={`bin-packing-layout w-full h-full min-h-96 relative ${className}`}>
             {/* Grid background */}
             {containerSize.width > 0 && containerSize.height > 0 && (
                 <div className="absolute inset-0 opacity-10">
@@ -515,7 +527,6 @@ const BinPackingLayout = ({
             {/* Windows */}
             {windows.map(window => {
                 const { x, y, width, height } = gridToPixel(window.gridX, window.gridY, window.gridWidth, window.gridHeight);
-                console.log(`Rendering window ${window.title}: grid(${window.gridX}, ${window.gridY}) -> pixel(${x}, ${y})`);
                 return (
                     <Window
                         key={window.id}
@@ -544,9 +555,9 @@ const BinPackingLayout = ({
             })}
             
             {/* Scale indicator */}
-            <div className="absolute bottom-2 right-2 text-xs text-gray-600 font-gothic bg-white/80 px-2 py-1 rounded">
+            {/* <div className="absolute bottom-2 right-2 text-xs text-gray-600 font-gothic bg-white/80 px-2 py-1 rounded">
                 {gridCols} × {gridRows} grid | Bin Packing Layout
-            </div>
+            </div> */}
         </div>
     );
 };

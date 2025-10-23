@@ -7,35 +7,38 @@ const InteractiveDesktop = () => {
     // Initialize with 3 demo windows for testing
     useEffect(() => {
         if (binPackingApi) {
-            // Add first demo window
-            binPackingApi.addWindow({
-                title: 'Bin Packing Window 1',
-                color: 'bg-blue-500',
-                gridX: 0,
-                gridY: 0,
-                gridWidth: 8,
-                gridHeight: 6
-            });
-            
-            // Add second demo window for collision testing
-            binPackingApi.addWindow({
-                title: 'Bin Packing Window 2',
-                color: 'bg-green-500',
-                gridX: 10,
-                gridY: 0,
-                gridWidth: 6,
-                gridHeight: 4
-            });
-            
-            // Add third demo window for edge testing
-            binPackingApi.addWindow({
-                title: 'Bin Packing Edge Test',
-                color: 'bg-red-500',
-                gridX: 0,
-                gridY: 8,
-                gridWidth: 5,
-                gridHeight: 3
-            });
+            // Add a delay to ensure container is measured first
+            setTimeout(() => {
+                // Add first demo window
+                binPackingApi.addWindow({
+                    title: 'Bin Packing Window 1',
+                    color: 'bg-blue-500',
+                    gridX: 0,
+                    gridY: 0,
+                    gridWidth: 8,
+                    gridHeight: 6
+                });
+                
+                // Add second demo window for collision testing
+                binPackingApi.addWindow({
+                    title: 'Bin Packing Window 2',
+                    color: 'bg-green-500',
+                    gridX: 10,
+                    gridY: 0,
+                    gridWidth: 6,
+                    gridHeight: 4
+                });
+                
+                // Add third demo window for edge testing
+                binPackingApi.addWindow({
+                    title: 'Bin Packing Edge Test',
+                    color: 'bg-red-500',
+                    gridX: 0,
+                    gridY: 8,
+                    gridWidth: 5,
+                    gridHeight: 3
+                });
+            }, 100); // Give container time to measure
         }
     }, [binPackingApi]);
 
@@ -55,7 +58,7 @@ const InteractiveDesktop = () => {
             </BinPackingLayout>
             
             {/* Instructions */}
-            <div className="absolute bottom-2 left-2 text-xs text-gray-600 font-gothic bg-white/80 px-2 py-1 rounded">
+            <div className="absolute bottom-2 left-2 text-sm text-gray-600 font-gothic font-xl bg-white/80 px-2 py-1 rounded">
                 Bin Packing Layout - Drag windows, they'll pack efficiently without overlaps
             </div>
         </div>
