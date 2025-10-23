@@ -227,21 +227,35 @@ const BinPackingLayout = ({
             children: windowConfig.children || null
         };
 
-        // Use bin packing to find valid position
-        const bestPosition = findBestPosition(
-            newWindow.id, 
-            newWindow.gridX * cellSize, 
-            newWindow.gridY * cellSize, 
-            newWindow.gridWidth, 
-            newWindow.gridHeight
-        );
+        // Use bin packing to find valid position - start from top-left and search systematically
+        let bestPosition = { gridX: 0, gridY: 0 };
+        let foundValidPosition = false;
+
+        // First try the requested position
+        if (!checkCollision(newWindow.gridX, newWindow.gridY, newWindow.gridWidth, newWindow.gridHeight, newWindow.id)) {
+            bestPosition = { gridX: newWindow.gridX, gridY: newWindow.gridY };
+            foundValidPosition = true;
+            console.log(`Window ${newWindow.title} placed at requested position: grid(${newWindow.gridX}, ${newWindow.gridY})`);
+        } else {
+            console.log(`Window ${newWindow.title} requested position grid(${newWindow.gridX}, ${newWindow.gridY}) has collision, searching for alternative`);
+            // If requested position is invalid, search systematically from top-left
+            for (let y = 0; y <= gridRows - newWindow.gridHeight && !foundValidPosition; y++) {
+                for (let x = 0; x <= gridCols - newWindow.gridWidth && !foundValidPosition; x++) {
+                    if (!checkCollision(x, y, newWindow.gridWidth, newWindow.gridHeight, newWindow.id)) {
+                        bestPosition = { gridX: x, gridY: y };
+                        foundValidPosition = true;
+                        console.log(`Window ${newWindow.title} placed at alternative position: grid(${x}, ${y})`);
+                    }
+                }
+            }
+        }
         
         newWindow.gridX = bestPosition.gridX;
         newWindow.gridY = bestPosition.gridY;
 
         setWindows(prev => [...prev, newWindow]);
         return newWindow.id;
-    }, [findBestPosition, minWindowWidth, minWindowHeight, cellSize]);
+    }, [checkCollision, minWindowWidth, minWindowHeight, gridCols, gridRows]);
 
     // Remove window
     const removeWindow = useCallback((windowId) => {

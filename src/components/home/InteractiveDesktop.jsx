@@ -11,8 +11,8 @@ const InteractiveDesktop = () => {
             binPackingApi.addWindow({
                 title: 'Bin Packing Window 1',
                 color: 'bg-blue-500',
-                gridX: 5,
-                gridY: 5,
+                gridX: 0,
+                gridY: 0,
                 gridWidth: 8,
                 gridHeight: 6
             });
@@ -21,8 +21,8 @@ const InteractiveDesktop = () => {
             binPackingApi.addWindow({
                 title: 'Bin Packing Window 2',
                 color: 'bg-green-500',
-                gridX: 15,
-                gridY: 8,
+                gridX: 10,
+                gridY: 0,
                 gridWidth: 6,
                 gridHeight: 4
             });
@@ -31,8 +31,8 @@ const InteractiveDesktop = () => {
             binPackingApi.addWindow({
                 title: 'Bin Packing Edge Test',
                 color: 'bg-red-500',
-                gridX: 2,
-                gridY: 12,
+                gridX: 0,
+                gridY: 8,
                 gridWidth: 5,
                 gridHeight: 3
             });
