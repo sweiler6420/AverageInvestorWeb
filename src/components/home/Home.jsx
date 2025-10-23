@@ -1,26 +1,25 @@
-import React from 'react'
-import Contact from './Contact'
+import React, { useState, useEffect, useContext } from 'react'
 import Hero from './Hero'
-import Who from './Who'
-import Works from './Works'
-import styles from './Home.styles'
-import styled from 'styled-components'
-
-const Container = styled.div`
-  scrollbar-width: none;
-  &::-webkit-scrollbar{
-    display: none;
-  }
-`
+import Features from './Features'
+import Workflow from './Workflow'
+import Pricing from './Pricing'
+import Contact from './Contact'
+import Footer from './Footer'
+import { useNavigate} from 'react-router-dom'
+import useAuth from '../../hooks/useAuth'
 
 export default function Home() {
+    const navigate = useNavigate()
+    const { auth } = useAuth()
+
     return (
-        // <div className={styles.home_div}>
-        <Container style={{background:'url(' + require('../../assets/bg.jpeg') + ')'}} className={styles.home_div}>
-            <Hero></Hero>
-            <Who></Who>
-            <Works></Works>
-            <Contact></Contact>
-        </Container>
+        <div className='min-h-screen pt-20 px-6'>
+            <Hero/>
+            <Features/>
+            <Workflow/>
+            <Pricing/>
+            <Contact/>
+            <Footer/>
+        </div>
     )
 }

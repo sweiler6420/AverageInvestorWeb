@@ -1,153 +1,111 @@
-import { Fragment, useContext, useState, useEffect} from 'react'
-import { Disclosure, Menu, Transition } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon, UserIcon } from '@heroicons/react/24/outline'
-import DarkModeSwitcher from './DarkModeSwitcher'
+import { useState } from 'react'
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { ReactComponent as Logo } from '../../assets/Changed_Logo.svg'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth';
-import usePath from '../../hooks/usePath'
 
-const initialPathway = [
-  { name: 'Home', href: '/', current: false, show: true, requireAuth: false},
-  { name: 'Login', href: '/login', current: false, show: false, requireAuth: false},
-  { name: 'Signup', href: '/signup', current: false, show: false, requireAuth: false},
-  { name: 'Stocks', href: '/login/stocks', current: false, show: true, requireAuth: true},
-]
-
-export default function Header() {
-  const navigate = useNavigate()
-  const { isAuthenticated, logout } = useAuth()
-  const { path } = usePath()
-
-  const [pathway, setPathway] = useState(initialPathway)
-
-  const user = [
-    { name: 'Profile', href: '#', current: false },
-    { name: 'Settings', href: '#', current: false},
+const navItems = [
+    { label: 'Home', href: '/#'},
+    { label: 'Features', href: '/#features'},
+    { label: 'Workflow', href: '/#workflow'},
+    { label: 'Pricing', href: '/#pricing'},
+    { label: 'Contact Us', href: '/#contact'},
   ]
 
-  useEffect(() => {
-    let temp_pathway = initialPathway.slice()
-    for(var i=0; i < temp_pathway.length; i++){
-      if(temp_pathway[i].href === path){
-        temp_pathway[i].current = true
-      }
+const authenticatedNavItems = [
+    { label: 'Home', href: '/#'},
+    { label: 'Stocks', href: '/stocks'},
+  ]
+
+export default function Header() {
+    const [drawerOpen, setDrawerOpen] = useState(false)
+    const { auth, logout } = useAuth()
+    const navigate = useNavigate()
+
+    function toggleNavbar(){
+        setDrawerOpen(!drawerOpen)
     }
-    setPathway(temp_pathway)
-  }, [path])
-  
-  function classNames(...classes) {
-    return classes.filter(Boolean).join(' ')
-  }
 
-  function logout_click() {
-    logout()
-    navigate("login")
-  }
-
-  return (  //fixed top-0 left-0 w-full // to force header on top
-      <Disclosure as="nav" className="relative bg-background-sub dark:bg-background-sub outline outline-primary dark:outline-none dark:shadow-neon-primary">
-        {({ open }) => (
-          <>
-            <div className="mx-auto w-full px-2 sm:px-6 lg:px-8">
-              <div className="relative flex h-16 items-center justify-between">
-                <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-                  {/* Mobile menu button*/}
-                  <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md p-2 text-primary hover:bg-secondary hover:text-primary focus:outline-none">
-                    <span className="absolute -inset-0.5" />
-                    <span className="sr-only">Open main menu</span>
-                    {open ? (
-                      <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                    ) : (
-                      <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                    )}
-                  </Disclosure.Button>
-                </div>
-                <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-                  <div className="flex flex-shrink-0 items-center">
-                    <Logo className="h-10 w-auto" fill="var(--primary)"/>
-                  </div>
-                  <div className="hidden sm:ml-6 sm:block">
-                    <div className="flex space-x-4">
-                      {pathway.map((item) => (
-                        item.show && (!item.requireAuth || (item.requireAuth && isAuthenticated === true)) &&
-                          <a key={item.name} href={item.href} className={classNames(item.current ? 'bg-secondary text-text dark:bg-secondary dark:text-text ' : 'text-reverse-text bg-primary hover:bg-secondary hover:text-text','rounded-md px-3 py-2 text-sm font-medium')}aria-current={item.current ? 'page' : undefined}>
-                            {item.name}
-                          </a>
-                      ))}
+    return (
+        <nav className='sticky top-0 z-50 py-3 backdrop-blur-lg border-b border-neutral-700/80'>
+            <div className='px-3 mx-auto relative text-sm'>
+                <div className='flex justify-between items-center'>
+                    <div className='flex items-center flex-shrink-0'> 
+                        {/* Desktop: Full name */}
+                        <div className="hidden md:block">
+                            <h1 className="font-gothic font-xl text-2xl">
+                                <span className="text-accent-secondary">Average</span>
+                                <span className="text-primary">Investor</span>
+                            </h1>
+                        </div>
+                        {/* Mobile: Icon */}
+                        <div className="md:hidden">
+                            <Logo className="h-7 w-auto" fill="var(--primary)"/>
+                        </div>
                     </div>
-                  </div>
-                </div>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                  {isAuthenticated === false ?
-                  <div className='flex space-x-4'>
-                    {path !== '/login' ?
-                      <a href="/login" className='bg-primary text-text dark:bg-primary dark:text-reverse-tex hover:bg-secondary hover:text-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
-                      Login
-                      </a> : null
-                    }
-                    {path !== '/signup' ?
-                      <a href="/signup" className='hidden md:block bg-primary text-text dark:bg-primary dark:text-reverse-text hover:bg-secondary hover:text-text rounded-md px-3 py-2 text-sm font-medium' aria-current='page'>
-                        <b>Get Started</b> - it's FREE
-                      </a> : null
-                    }
-                  </div> : 
-                  <>
-                    <DarkModeSwitcher className="h-12 w-6" aria-hidden="true" />
-                    <Menu as="div" className="relative ml-3">
-                      <div>
-                        <Menu.Button className="relative flex rounded-full text-sm focus:outline-none transform active:scale-75 transition-transform">
-                          <span className="absolute -inset-1.5" />
-                          <span className="sr-only">Open user menu</span>
-                          <UserIcon className="h-8 w-8 text-primary"></UserIcon>
-                        </Menu.Button>
-                      </div>
-                      <Transition as={Fragment} enter="transition ease-out duration-100" enterFrom="transform opacity-0 scale-95" enterTo="transform opacity-100 scale-100" leave="transition ease-in duration-75" leaveFrom="transform opacity-100 scale-100" leaveTo="transform opacity-0 scale-95">
-                        <Menu.Items className="absolute rounded-sm right-0 z-10 mt-2 w-auto origin-top-right bg-background-sub dark:bg-background-sub outline outline-primary dark:shadow-neon-primary">
-                          {user.map((item, index) => (
-                            <Menu.Item key={item.name}>
-                              {({ active }) => (
-                                <a href={item.href} className={classNames(active ? 'bg-secondary text-text' : '', 'block px-4 py-2 text-center text-sm text-text bg-background-sub w-full border-b-2 border-primary')}>
-                                  {item.name}
+                    <ul className='hidden lg:flex ml-14 space-x-12'>
+                        {(auth?.access_token ? authenticatedNavItems : navItems).map((item, index) => (
+                            <li key={index}>
+                                <a className='font-gothic font-demi text-lg hover:underline' href={item.href}>
+                                    {item.label}
                                 </a>
-                              )}
-                            </Menu.Item>
-                          ))}
-                          <Menu.Item>
-                              {({ active }) => (
-                                <button onClick={() => logout_click()} className={classNames(active ? 'bg-secondary text-text' : '', 'block px-4 py-2 text-center text-sm text-text bg-background-sub w-full')}>
-                                  Logout
-                                </button>
-                              )}
-                            </Menu.Item>
-                        </Menu.Items>
-                      </Transition>
-                    </Menu> 
-                  </>}
+                            </li>
+                        ))}
+                    </ul>
+                    <div className='hidden lg:flex justify-center space-x-12 items-center'>
+                    {auth?.access_token ? (
+                        <div className="flex space-x-4">
+                            <button className='font-gothic font-demi py-2 px-3 border border-neutral-700/80 rounded-md hover:scale-105 hover:underline' onClick={() => {logout(); navigate("/#")}}>
+                                Logout
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex space-x-4">
+                            <a className='font-gothic font-demi py-2 px-3 border border-neutral-700/80 rounded-md hover:scale-105 hover:underline' href='/login'>
+                                Login In
+                            </a>
+                            <a className='font-gothic font-demi text-reverse-text py-2 px-3 border rounded-md bg-gradient-to-r from-accent-secondary/80 to-primary/80 hover:scale-105 hover:underline' href='/signup'>
+                                Create an Account
+                            </a>
+                        </div>
+                    )} 
+                    </div>
+                    <div className='lg:hidden md:flex flex-col justify-end'>
+                        <button onClick={toggleNavbar}>
+                            {drawerOpen ? <XMarkIcon className="block h-6 w-6" aria-hidden="true"/> : <Bars3Icon className="block h-6 w-6" aria-hidden="true"/>}
+                        </button>
+                    </div>
                 </div>
-              </div>
+                {drawerOpen && (
+                    <div className='fixed right-0 mt-3 z-20 bg-gray-200 w-full p-12 flex flex-col justify-center items-center lg:hidden'>
+                        <ul>
+                            {(auth?.access_token ? authenticatedNavItems : navItems).map((item, index) => (
+                                <li key={index} className='py-2'>
+                                    <a className='font-gothic font-demi text-lg hover:underline' href={item.href}>
+                                        {item.label}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                        {auth?.access_token ? (
+                            <div className="flex space-x-6 mt-4">
+                                <button className='font-gothic font-demi py-2 px-3 border border-neutral-700/80 rounded-md hover:scale-105 hover:underline' onClick={() => {logout(); navigate("/#")}}>
+                                    Logout
+                                </button>
+                            </div>
+                        ) : (
+                            <div className='flex space-x-6 mt-4'>
+                                <a className='font-gothic font-demi py-2 px-3 border border-neutral-700/80 rounded-md hover:scale-105 hover:underline' href='/login'>
+                                    Login In
+                                </a>    
+                                <a className='font-gothic font-demi text-reverse-text py-2 px-3 border rounded-md bg-gradient-to-r from-accent-secondary/80 to-primary/80 hover:scale-105 hover:underline' href='/signup'>
+                                    Create an Account
+                                </a>  
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
-
-            <Disclosure.Panel className="sm:hidden">
-              <div className="space-y-1 px-2 pb-3 pt-2">
-                {pathway.map((item) => (
-                  <Disclosure.Button
-                    key={item.name}
-                    as="a"
-                    href={item.href}
-                    className={classNames(
-                      item.current ? 'bg-secondary text-text' : 'text-text hover:bg-secondary',
-                      'block rounded-md px-3 py-2 text-base font-medium'
-                    )}
-                    aria-current={item.current ? 'page' : undefined}
-                  >
-                    {item.name}
-                  </Disclosure.Button>
-                ))}
-              </div>
-            </Disclosure.Panel>
-          </>
-        )}
-      </Disclosure>
-  )
+        </nav>
+    )
 }
