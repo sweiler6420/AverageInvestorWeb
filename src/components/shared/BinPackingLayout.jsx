@@ -6,7 +6,7 @@ import {
     ChevronDoubleRightIcon 
 } from '@heroicons/react/24/outline'
 
-// Window component with minimize, maximize, close buttons
+// Window component (reused from original)
 const Window = ({ 
     id, 
     title, 
@@ -24,23 +24,15 @@ const Window = ({
     ...props
 }) => {
     const handleMouseDown = (e) => {
-        console.log('Window handleMouseDown for window:', id);
-        console.log('Target element:', e.target);
-        console.log('Target classes:', e.target.className);
-        
         // Check if clicking directly on buttons or resize handle (not the title)
         const isButtonClick = e.target.tagName === 'BUTTON' || 
             e.target.classList.contains('resize-handle') ||
             e.target.closest('.resize-handle');
             
         if (isButtonClick) {
-            console.log('Clicked on button or resize handle, not dragging');
-            console.log('Target tag:', e.target.tagName);
-            console.log('Target parent:', e.target.parentElement?.className);
             return; // Don't drag if clicking buttons or resize handle
         }
         
-        console.log('Starting drag for window:', id);
         onDragStart(e, id);
     };
 
@@ -73,7 +65,6 @@ const Window = ({
                     />
                     <button 
                         onClick={(e) => {
-                            console.log('Close button clicked for window:', id);
                             e.stopPropagation();
                             onClose(id);
                         }}
@@ -112,16 +103,15 @@ const Window = ({
     );
 };
 
-// Main GridLayout component
-const GridLayout = ({ 
+// Bin Packing Layout Component
+const BinPackingLayout = ({ 
     children, 
     className = "",
-    gridSize = 20,
+    cellSize = 20,
     minWindowWidth = 4,
     minWindowHeight = 3,
     maxWindowWidth = 20,
-    maxWindowHeight = 15,
-    gap = 4
+    maxWindowHeight = 15
 }) => {
     const containerRef = useRef(null);
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -132,8 +122,8 @@ const GridLayout = ({
     const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
     // Calculate grid dimensions
-    const GRID_COLS = Math.floor(containerSize.width / gridSize);
-    const GRID_ROWS = Math.floor(containerSize.height / gridSize);
+    const gridCols = Math.floor(containerSize.width / cellSize);
+    const gridRows = Math.floor(containerSize.height / cellSize);
 
     // Update container size
     useEffect(() => {
@@ -149,89 +139,80 @@ const GridLayout = ({
         return () => window.removeEventListener('resize', updateSize);
     }, []);
 
-    // Convert grid coordinates to pixels
+    // Convert grid coordinates to pixel coordinates
     const gridToPixel = useCallback((gridX, gridY, gridWidth, gridHeight) => {
         return {
-            x: gridX * gridSize + gap,
-            y: gridY * gridSize + gap,
-            width: gridWidth * gridSize - (gap * 2),
-            height: gridHeight * gridSize - (gap * 2)
+            x: gridX * cellSize,
+            y: gridY * cellSize,
+            width: gridWidth * cellSize,
+            height: gridHeight * cellSize
         };
-    }, [gridSize, gap]);
+    }, [cellSize]);
 
-    // Convert pixels to grid coordinates
-    const pixelToGrid = useCallback((x, y, width, height) => {
+    // Convert pixel coordinates to grid coordinates
+    const pixelToGrid = useCallback((pixelX, pixelY) => {
         return {
-            gridX: Math.round((x - gap) / gridSize),
-            gridY: Math.round((y - gap) / gridSize),
-            gridWidth: Math.round((width + gap * 2) / gridSize),
-            gridHeight: Math.round((height + gap * 2) / gridSize)
+            gridX: Math.floor(pixelX / cellSize),
+            gridY: Math.floor(pixelY / cellSize)
         };
-    }, [gridSize, gap]);
+    }, [cellSize]);
 
-    // Check if position is valid - STRICT OVERLAP PREVENTION
-    const isValidPosition = useCallback((windowId, gridX, gridY, gridWidth, gridHeight) => {
-        // Check boundaries
+    // AABB Collision Detection
+    const checkCollision = useCallback((gridX, gridY, gridWidth, gridHeight, excludeWindowId = null) => {
+        // Check bounds
         if (gridX < 0 || gridY < 0 || 
-            gridX + gridWidth > GRID_COLS || 
-            gridY + gridHeight > GRID_ROWS) {
-            return false;
+            gridX + gridWidth > gridCols || 
+            gridY + gridHeight > gridRows) {
+            return true; // Out of bounds
         }
 
-        // Check size constraints
-        if (gridWidth < minWindowWidth || gridHeight < minWindowHeight ||
-            gridWidth > maxWindowWidth || gridHeight > maxWindowHeight) {
-            return false;
-        }
-
-        // STRICT overlap check - no windows can overlap
-        return !windows.some(window => {
-            if (window.id === windowId) return false;
+        // Check collision with other windows
+        return windows.some(window => {
+            if (window.id === excludeWindowId) return false;
             
-            // Check if rectangles overlap (strict no-overlap policy)
-            const overlap = !(gridX >= window.gridX + window.gridWidth ||
-                            gridX + gridWidth <= window.gridX ||
-                            gridY >= window.gridY + window.gridHeight ||
-                            gridY + gridHeight <= window.gridY);
-            
-            return overlap;
+            // AABB collision detection
+            return !(gridX >= window.gridX + window.gridWidth ||
+                    gridX + gridWidth <= window.gridX ||
+                    gridY >= window.gridY + window.gridHeight ||
+                    gridY + gridHeight <= window.gridY);
         });
-    }, [windows, GRID_COLS, GRID_ROWS, minWindowWidth, minWindowHeight, maxWindowWidth, maxWindowHeight]);
+    }, [windows, gridCols, gridRows]);
 
-    // Find best position with expanded search for no-overlap guarantee
+    // Bin Packing Algorithm - Find best position
     const findBestPosition = useCallback((windowId, pixelX, pixelY, gridWidth, gridHeight) => {
-        const clampedX = Math.max(0, Math.min(pixelX, containerSize.width - (gridWidth * gridSize)));
-        const clampedY = Math.max(0, Math.min(pixelY, containerSize.height - (gridHeight * gridSize)));
+        // Snap to grid
+        const { gridX: targetX, gridY: targetY } = pixelToGrid(pixelX, pixelY);
         
-        const gridX = Math.round(clampedX / gridSize);
-        const gridY = Math.round(clampedY / gridSize);
-
-        // Try exact position first
-        if (isValidPosition(windowId, gridX, gridY, gridWidth, gridHeight)) {
-            return { gridX, gridY };
+        // Clamp to valid bounds
+        const clampedX = Math.max(0, Math.min(targetX, gridCols - gridWidth));
+        const clampedY = Math.max(0, Math.min(targetY, gridRows - gridHeight));
+        
+        // Check if this position is valid
+        if (!checkCollision(clampedX, clampedY, gridWidth, gridHeight, windowId)) {
+            return { gridX: clampedX, gridY: clampedY };
         }
-
-        // Expanded search pattern for guaranteed no-overlap
+        
+        // Bin packing: Find nearest valid position using spiral search
         for (let radius = 1; radius <= 10; radius++) {
             for (let dx = -radius; dx <= radius; dx++) {
                 for (let dy = -radius; dy <= radius; dy++) {
                     if (Math.abs(dx) === radius || Math.abs(dy) === radius) {
-                        const testX = gridX + dx;
-                        const testY = gridY + dy;
-                        if (isValidPosition(windowId, testX, testY, gridWidth, gridHeight)) {
+                        const testX = clampedX + dx;
+                        const testY = clampedY + dy;
+                        
+                        if (!checkCollision(testX, testY, gridWidth, gridHeight, windowId)) {
                             return { gridX: testX, gridY: testY };
                         }
                     }
                 }
             }
         }
+        
+        // Fallback to original position
+        return { gridX: clampedX, gridY: clampedY };
+    }, [pixelToGrid, checkCollision, gridCols, gridRows]);
 
-        // If no valid position found, return original position
-        const originalWindow = windows.find(w => w.id === windowId);
-        return { gridX: originalWindow?.gridX || 0, gridY: originalWindow?.gridY || 0 };
-    }, [isValidPosition, containerSize, gridSize, windows]);
-
-    // Add window with guaranteed no-overlap placement
+    // Add window with bin packing placement
     const addWindow = useCallback((windowConfig) => {
         const newWindow = {
             id: `window_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -246,35 +227,24 @@ const GridLayout = ({
             children: windowConfig.children || null
         };
 
-        // Find valid position by checking against existing windows
-        let bestPosition = { gridX: newWindow.gridX, gridY: newWindow.gridY };
-        
-        // If the requested position is invalid, find a new one
-        if (!isValidPosition(newWindow.id, newWindow.gridX, newWindow.gridY, newWindow.gridWidth, newWindow.gridHeight)) {
-            // Try positions in a systematic way
-            for (let y = 0; y < GRID_ROWS - newWindow.gridHeight + 1; y++) {
-                for (let x = 0; x < GRID_COLS - newWindow.gridWidth + 1; x++) {
-                    if (isValidPosition(newWindow.id, x, y, newWindow.gridWidth, newWindow.gridHeight)) {
-                        bestPosition = { gridX: x, gridY: y };
-                        break;
-                    }
-                }
-                if (bestPosition.gridX !== newWindow.gridX || bestPosition.gridY !== newWindow.gridY) {
-                    break;
-                }
-            }
-        }
+        // Use bin packing to find valid position
+        const bestPosition = findBestPosition(
+            newWindow.id, 
+            newWindow.gridX * cellSize, 
+            newWindow.gridY * cellSize, 
+            newWindow.gridWidth, 
+            newWindow.gridHeight
+        );
         
         newWindow.gridX = bestPosition.gridX;
         newWindow.gridY = bestPosition.gridY;
 
         setWindows(prev => [...prev, newWindow]);
         return newWindow.id;
-    }, [isValidPosition, minWindowWidth, minWindowHeight, GRID_COLS, GRID_ROWS]);
+    }, [findBestPosition, minWindowWidth, minWindowHeight, cellSize]);
 
     // Remove window
     const removeWindow = useCallback((windowId) => {
-        console.log('Removing window:', windowId);
         setWindows(prev => prev.filter(w => w.id !== windowId));
     }, []);
 
@@ -292,9 +262,8 @@ const GridLayout = ({
         ));
     }, []);
 
-    // Drag handlers with strict no-overlap enforcement
+    // Drag handlers
     const handleDragStart = useCallback((e, windowId) => {
-        console.log('Drag start:', windowId);
         e.preventDefault();
         e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
@@ -306,7 +275,6 @@ const GridLayout = ({
     }, []);
 
     const handleResizeStart = useCallback((e, windowId) => {
-        console.log('Resize start:', windowId);
         e.preventDefault();
         e.stopPropagation();
         const windowElement = document.querySelector(`[data-window-id="${windowId}"]`);
@@ -328,13 +296,21 @@ const GridLayout = ({
         const containerRect = containerRef.current.getBoundingClientRect();
         
         if (draggedWindow) {
+            // Calculate pixel position relative to container
             const pixelX = e.clientX - containerRect.left - dragOffset.x;
             const pixelY = e.clientY - containerRect.top - dragOffset.y;
             
             const window = windows.find(w => w.id === draggedWindow);
             
-            // ALWAYS snap to valid position to prevent overlaps
-            const { gridX, gridY } = findBestPosition(draggedWindow, pixelX, pixelY, window.gridWidth, window.gridHeight);
+            // Use bin packing algorithm to find best position
+            const { gridX, gridY } = findBestPosition(
+                draggedWindow, 
+                pixelX, 
+                pixelY, 
+                window.gridWidth, 
+                window.gridHeight
+            );
+            
             const { x, y } = gridToPixel(gridX, gridY, window.gridWidth, window.gridHeight);
             
             const windowElement = document.querySelector(`[data-window-id="${draggedWindow}"]`);
@@ -347,8 +323,8 @@ const GridLayout = ({
             const deltaX = e.clientX - resizeStart.x;
             const deltaY = e.clientY - resizeStart.y;
             
-            const newWidth = Math.max(resizeStart.width + deltaX, minWindowWidth * gridSize);
-            const newHeight = Math.max(resizeStart.height + deltaY, minWindowHeight * gridSize);
+            const newWidth = Math.max(resizeStart.width + deltaX, minWindowWidth * cellSize);
+            const newHeight = Math.max(resizeStart.height + deltaY, minWindowHeight * cellSize);
             
             const windowElement = document.querySelector(`[data-window-id="${resizingWindow}"]`);
             if (windowElement) {
@@ -357,39 +333,48 @@ const GridLayout = ({
                 const currentX = rect.left - containerRect.left;
                 const currentY = rect.top - containerRect.top;
                 
-                const { gridWidth, gridHeight } = pixelToGrid(currentX, currentY, newWidth, newHeight);
+                const { gridWidth, gridHeight } = pixelToGrid(newWidth, newHeight);
                 const currentWindow = windows.find(w => w.id === resizingWindow);
                 
-                // Only allow resize if it doesn't create overlap
-                if (isValidPosition(resizingWindow, currentWindow.gridX, currentWindow.gridY, gridWidth, gridHeight)) {
+                // Only allow resize if it doesn't create collision
+                if (!checkCollision(currentWindow.gridX, currentWindow.gridY, gridWidth, gridHeight, resizingWindow)) {
                     windowElement.style.width = `${newWidth}px`;
                     windowElement.style.height = `${newHeight}px`;
                     windowElement.style.zIndex = '10';
                 }
-                // If resize would create overlap, don't resize
             }
         }
-    }, [draggedWindow, resizingWindow, dragOffset, resizeStart, windows, findBestPosition, gridToPixel, pixelToGrid, isValidPosition, minWindowWidth, minWindowHeight, gridSize]);
+    }, [draggedWindow, resizingWindow, dragOffset, resizeStart, windows, findBestPosition, gridToPixel, pixelToGrid, checkCollision, minWindowWidth, minWindowHeight, cellSize]);
 
     const handleMouseUp = useCallback(() => {
-        console.log('Mouse up - draggedWindow:', draggedWindow, 'resizingWindow:', resizingWindow);
         if (draggedWindow) {
             const windowElement = document.querySelector(`[data-window-id="${draggedWindow}"]`);
             if (windowElement) {
+                // Get the current DOM position
                 const rect = windowElement.getBoundingClientRect();
                 const containerRect = containerRef.current.getBoundingClientRect();
                 const pixelX = rect.left - containerRect.left;
                 const pixelY = rect.top - containerRect.top;
                 
-                const window = windows.find(w => w.id === draggedWindow);
-                const { gridX, gridY } = findBestPosition(draggedWindow, pixelX, pixelY, window.gridWidth, window.gridHeight);
+                // Get current window state
+                const currentWindow = windows.find(w => w.id === draggedWindow);
+                
+                // Use bin packing to find final position
+                const { gridX: finalGridX, gridY: finalGridY } = findBestPosition(
+                    draggedWindow,
+                    pixelX,
+                    pixelY,
+                    currentWindow.gridWidth,
+                    currentWindow.gridHeight
+                );
                 
                 setWindows(prev => prev.map(w => 
                     w.id === draggedWindow 
-                        ? { ...w, gridX, gridY }
+                        ? { ...w, gridX: finalGridX, gridY: finalGridY }
                         : w
                 ));
                 
+                // Clear inline styles
                 windowElement.style.left = '';
                 windowElement.style.top = '';
                 windowElement.style.zIndex = '';
@@ -402,7 +387,7 @@ const GridLayout = ({
                 const pixelX = rect.left - containerRect.left;
                 const pixelY = rect.top - containerRect.top;
                 
-                const { gridWidth, gridHeight } = pixelToGrid(pixelX, pixelY, rect.width, rect.height);
+                const { gridWidth, gridHeight } = pixelToGrid(rect.width, rect.height);
                 
                 setWindows(prev => prev.map(w => 
                     w.id === resizingWindow 
@@ -416,7 +401,6 @@ const GridLayout = ({
             }
         }
         
-        console.log('Resetting drag/resize state');
         setDraggedWindow(null);
         setDragOffset({ x: 0, y: 0 });
         setResizingWindow(null);
@@ -449,18 +433,20 @@ const GridLayout = ({
     }, [children, addWindow, removeWindow, minimizeWindow, maximizeWindow, windows]);
 
     return (
-        <div ref={containerRef} className={`grid-layout w-full h-full relative ${className}`}>
+        <div ref={containerRef} className={`bin-packing-layout w-full h-full relative ${className}`}>
             {/* Grid background */}
             {containerSize.width > 0 && containerSize.height > 0 && (
                 <div className="absolute inset-0 opacity-10">
-                    <div className="grid h-full" style={{
-                        gridTemplateColumns: `repeat(${GRID_COLS}, ${gridSize}px)`,
-                        gridTemplateRows: `repeat(${GRID_ROWS}, ${gridSize}px)`
-                    }}>
-                        {Array.from({ length: GRID_COLS * GRID_ROWS }).map((_, i) => (
-                            <div key={i} className="border border-gray-300"></div>
+                    <svg width="100%" height="100%">
+                        {/* Vertical grid lines */}
+                        {Array.from({ length: gridCols + 1 }).map((_, i) => (
+                            <line key={`v-${i}`} x1={i * cellSize} y1={0} x2={i * cellSize} y2={containerSize.height} stroke="#ccc" strokeWidth="1" />
                         ))}
-                    </div>
+                        {/* Horizontal grid lines */}
+                        {Array.from({ length: gridRows + 1 }).map((_, i) => (
+                            <line key={`h-${i}`} x1={0} y1={i * cellSize} x2={containerSize.width} y2={i * cellSize} stroke="#ccc" strokeWidth="1" />
+                        ))}
+                    </svg>
                 </div>
             )}
             
@@ -496,10 +482,10 @@ const GridLayout = ({
             
             {/* Scale indicator */}
             <div className="absolute bottom-2 right-2 text-xs text-gray-600 font-gothic bg-white/80 px-2 py-1 rounded">
-                {GRID_COLS} × {GRID_ROWS} grid
+                {gridCols} × {gridRows} grid | Bin Packing Layout
             </div>
         </div>
     );
 };
 
-export default GridLayout;
+export default BinPackingLayout;

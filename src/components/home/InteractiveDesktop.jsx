@@ -1,70 +1,62 @@
 import React, { useState, useEffect } from 'react'
-import GridLayout from '../shared/GridLayout'
+import BinPackingLayout from '../shared/BinPackingLayout'
 
 const InteractiveDesktop = () => {
-    const [gridApi, setGridApi] = useState(null);
+    const [binPackingApi, setBinPackingApi] = useState(null);
 
-    // Initialize with demo windows
+    // Initialize with 3 demo windows for testing
     useEffect(() => {
-        if (gridApi) {
-            // Add demo windows
-            gridApi.addWindow({
-                title: 'AAPL Chart',
+        if (binPackingApi) {
+            // Add first demo window
+            binPackingApi.addWindow({
+                title: 'Bin Packing Window 1',
                 color: 'bg-blue-500',
-                gridX: 1,
-                gridY: 2,
+                gridX: 5,
+                gridY: 5,
                 gridWidth: 8,
                 gridHeight: 6
             });
-
-            gridApi.addWindow({
-                title: 'TSLA Data',
+            
+            // Add second demo window for collision testing
+            binPackingApi.addWindow({
+                title: 'Bin Packing Window 2',
                 color: 'bg-green-500',
-                gridX: 10,
-                gridY: 3,
-                gridWidth: 8,
-                gridHeight: 5
-            });
-
-            gridApi.addWindow({
-                title: 'Portfolio',
-                color: 'bg-purple-500',
-                gridX: 4,
-                gridY: 9,
-                gridWidth: 8,
-                gridHeight: 5
-            });
-
-            gridApi.addWindow({
-                title: 'News',
-                color: 'bg-orange-500',
-                gridX: 13,
-                gridY: 9,
+                gridX: 15,
+                gridY: 8,
                 gridWidth: 6,
-                gridHeight: 5
+                gridHeight: 4
+            });
+            
+            // Add third demo window for edge testing
+            binPackingApi.addWindow({
+                title: 'Bin Packing Edge Test',
+                color: 'bg-red-500',
+                gridX: 2,
+                gridY: 12,
+                gridWidth: 5,
+                gridHeight: 3
             });
         }
-    }, [gridApi]);
+    }, [binPackingApi]);
 
     return (
         <div className="w-full h-full">
-            <GridLayout
-                gridSize={20}
+            <BinPackingLayout
+                cellSize={20}
                 minWindowWidth={4}
                 minWindowHeight={3}
                 maxWindowWidth={20}
                 maxWindowHeight={15}
-                gap={4}
             >
                 {(api) => {
-                    if (!gridApi) setGridApi(api);
+                    if (!binPackingApi) setBinPackingApi(api);
                     return null;
                 }}
-            </GridLayout>
+            </BinPackingLayout>
             
             {/* Instructions */}
             <div className="absolute bottom-2 left-2 text-xs text-gray-600 font-gothic bg-white/80 px-2 py-1 rounded">
-                Drag windows - they'll snap to grid and never overlap
+                Bin Packing Layout - Drag windows, they'll pack efficiently without overlaps
             </div>
         </div>
     );
