@@ -118,6 +118,7 @@ const BinPackingLayout = ({
     const [windows, setWindows] = useState([]);
     const [draggedWindow, setDraggedWindow] = useState(null);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const finalDragPositionRef = useRef({ gridX: 0, gridY: 0 });
     const [resizingWindow, setResizingWindow] = useState(null);
     const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
@@ -180,9 +181,9 @@ const BinPackingLayout = ({
 
     // Bin Packing Algorithm - Find best position
     const findBestPosition = useCallback((windowId, pixelX, pixelY, gridWidth, gridHeight) => {
+
         // Snap to grid
         const { gridX: targetX, gridY: targetY } = pixelToGrid(pixelX, pixelY);
-        
         // Clamp to valid bounds
         const clampedX = Math.max(0, Math.min(targetX, gridCols - gridWidth));
         const clampedY = Math.max(0, Math.min(targetY, gridRows - gridHeight));
@@ -286,6 +287,8 @@ const BinPackingLayout = ({
             x: e.clientX - rect.left,
             y: e.clientY - rect.top
         });
+        // Reset final drag position
+        finalDragPositionRef.current = { gridX: 0, gridY: 0 };
     }, []);
 
     const handleResizeStart = useCallback((e, windowId) => {
@@ -325,6 +328,9 @@ const BinPackingLayout = ({
                 window.gridHeight
             );
             
+            // Store the final calculated position for use in handleMouseUp
+            finalDragPositionRef.current = { gridX, gridY };
+            
             const { x, y } = gridToPixel(gridX, gridY, window.gridWidth, window.gridHeight);
             
             const windowElement = document.querySelector(`[data-window-id="${draggedWindow}"]`);
@@ -340,20 +346,25 @@ const BinPackingLayout = ({
             const newWidth = Math.max(resizeStart.width + deltaX, minWindowWidth * cellSize);
             const newHeight = Math.max(resizeStart.height + deltaY, minWindowHeight * cellSize);
             
+            // Snap to grid boundaries
+            const snappedWidth = Math.round(newWidth / cellSize) * cellSize;
+            const snappedHeight = Math.round(newHeight / cellSize) * cellSize;
+            
+            // Ensure minimum size
+            const finalWidth = Math.max(snappedWidth, minWindowWidth * cellSize);
+            const finalHeight = Math.max(snappedHeight, minWindowHeight * cellSize);
+            
             const windowElement = document.querySelector(`[data-window-id="${resizingWindow}"]`);
             if (windowElement) {
-                const rect = windowElement.getBoundingClientRect();
-                const containerRect = containerRef.current.getBoundingClientRect();
-                const currentX = rect.left - containerRect.left;
-                const currentY = rect.top - containerRect.top;
-                
-                const { gridWidth, gridHeight } = pixelToGrid(newWidth, newHeight);
+                // Convert to grid dimensions for collision checking
+                const gridWidth = Math.round(finalWidth / cellSize);
+                const gridHeight = Math.round(finalHeight / cellSize);
                 const currentWindow = windows.find(w => w.id === resizingWindow);
                 
                 // Only allow resize if it doesn't create collision
                 if (!checkCollision(currentWindow.gridX, currentWindow.gridY, gridWidth, gridHeight, resizingWindow)) {
-                    windowElement.style.width = `${newWidth}px`;
-                    windowElement.style.height = `${newHeight}px`;
+                    windowElement.style.width = `${finalWidth}px`;
+                    windowElement.style.height = `${finalHeight}px`;
                     windowElement.style.zIndex = '10';
                 }
             }
@@ -364,62 +375,66 @@ const BinPackingLayout = ({
         if (draggedWindow) {
             const windowElement = document.querySelector(`[data-window-id="${draggedWindow}"]`);
             if (windowElement) {
-                // Get the current DOM position
-                const rect = windowElement.getBoundingClientRect();
-                const containerRect = containerRef.current.getBoundingClientRect();
-                const pixelX = rect.left - containerRect.left;
-                const pixelY = rect.top - containerRect.top;
+                // Capture the final position values before state update
+                const finalX = finalDragPositionRef.current.gridX;
+                const finalY = finalDragPositionRef.current.gridY;
                 
-                // Get current window state
+                // Calculate the final pixel position
                 const currentWindow = windows.find(w => w.id === draggedWindow);
+                const { x: finalPixelX, y: finalPixelY } = gridToPixel(finalX, finalY, currentWindow.gridWidth, currentWindow.gridHeight);
                 
-                // Use bin packing to find final position
-                const { gridX: finalGridX, gridY: finalGridY } = findBestPosition(
-                    draggedWindow,
-                    pixelX,
-                    pixelY,
-                    currentWindow.gridWidth,
-                    currentWindow.gridHeight
-                );
-                
-                setWindows(prev => prev.map(w => 
-                    w.id === draggedWindow 
-                        ? { ...w, gridX: finalGridX, gridY: finalGridY }
-                        : w
-                ));
-                
-                // Clear inline styles
-                windowElement.style.left = '';
-                windowElement.style.top = '';
+                // Set the final position directly in the DOM
+                windowElement.style.left = `${finalPixelX}px`;
+                windowElement.style.top = `${finalPixelY}px`;
                 windowElement.style.zIndex = '';
+                
+                // Update state to match
+                setWindows(prev => {
+                    const updated = prev.map(w => 
+                        w.id === draggedWindow 
+                            ? { ...w, gridX: finalX, gridY: finalY }
+                            : w
+                    );
+                    return updated;
+                });
             }
         } else if (resizingWindow) {
             const windowElement = document.querySelector(`[data-window-id="${resizingWindow}"]`);
             if (windowElement) {
                 const rect = windowElement.getBoundingClientRect();
-                const containerRect = containerRef.current.getBoundingClientRect();
-                const pixelX = rect.left - containerRect.left;
-                const pixelY = rect.top - containerRect.top;
                 
-                const { gridWidth, gridHeight } = pixelToGrid(rect.width, rect.height);
+                // Convert pixel dimensions to grid dimensions
+                const gridWidth = Math.round(rect.width / cellSize);
+                const gridHeight = Math.round(rect.height / cellSize);
                 
+                // Ensure minimum size
+                const finalGridWidth = Math.max(gridWidth, minWindowWidth);
+                const finalGridHeight = Math.max(gridHeight, minWindowHeight);
+                
+                // Calculate final pixel dimensions
+                const finalWidth = finalGridWidth * cellSize;
+                const finalHeight = finalGridHeight * cellSize;
+                
+                // Set the final size directly in the DOM
+                windowElement.style.width = `${finalWidth}px`;
+                windowElement.style.height = `${finalHeight}px`;
+                windowElement.style.zIndex = '';
+                
+                // Update state to match
                 setWindows(prev => prev.map(w => 
                     w.id === resizingWindow 
-                        ? { ...w, gridWidth, gridHeight }
+                        ? { ...w, gridWidth: finalGridWidth, gridHeight: finalGridHeight }
                         : w
                 ));
-                
-                windowElement.style.width = '';
-                windowElement.style.height = '';
-                windowElement.style.zIndex = '';
             }
         }
         
         setDraggedWindow(null);
         setDragOffset({ x: 0, y: 0 });
+        finalDragPositionRef.current = { gridX: 0, gridY: 0 };
         setResizingWindow(null);
         setResizeStart({ x: 0, y: 0, width: 0, height: 0 });
-    }, [draggedWindow, resizingWindow, windows, findBestPosition, pixelToGrid]);
+    }, [draggedWindow, resizingWindow, windows, pixelToGrid, gridToPixel]);
 
     // Event listeners
     useEffect(() => {
