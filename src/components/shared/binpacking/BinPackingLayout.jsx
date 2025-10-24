@@ -301,8 +301,8 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     return {
       title,
       color,
-      width: 6,
-      height: 4,
+      width: 10,
+      height: 8,
       minWidth: 5,
       minHeight: 4,
       content: (
@@ -327,26 +327,41 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     const scrollY = containerRef.current.scrollTop || 0;
     const clientX = e.clientX - rect.left + scrollX;
     const clientY = e.clientY - rect.top + scrollY;
-    const startX = Math.max(0, Math.round((clientX - gridSpec.offsetLeft) / cellSize));
-    const startY = Math.max(0, Math.round((clientY - gridSpec.offsetTop) / cellSize));
-
     const base = (windowFactory || defaultWindowFactory)(type);
-    const minW = Math.max(1, base.minWidth || 1);
-    const minH = Math.max(1, base.minHeight || 1);
-    const allowed = computeAllowedSize(startX, startY, base.width, base.height, minW, minH);
-    const pos = findNearestValidPosition(startX, startY, allowed.width, allowed.height);
+
+    let x; let y; let width; let height;
+    if (dragPreview) {
+      width = Math.max(1, dragPreview.width);
+      height = Math.max(1, dragPreview.height);
+      const pos = findNearestValidPosition(dragPreview.x, dragPreview.y, width, height);
+      x = Math.max(0, Math.min(gridSpec.cols - width, pos.x));
+      y = Math.max(0, Math.min(gridSpec.rows - height, pos.y));
+    } else {
+      const centerX = (clientX - gridSpec.offsetLeft) / cellSize;
+      const centerY = (clientY - gridSpec.offsetTop) / cellSize;
+      const startX = Math.max(0, Math.round(centerX - base.width / 2));
+      const startY = Math.max(0, Math.round(centerY - base.height / 2));
+      const minW = Math.max(1, base.minWidth || 1);
+      const minH = Math.max(1, base.minHeight || 1);
+      const allowed = computeAllowedSize(startX, startY, base.width, base.height, minW, minH);
+      const pos = findNearestValidPosition(startX, startY, allowed.width, allowed.height);
+      width = allowed.width; height = allowed.height;
+      x = Math.max(0, Math.min(gridSpec.cols - width, pos.x));
+      y = Math.max(0, Math.min(gridSpec.rows - height, pos.y));
+    }
+
     const win = {
+      ...base,
       id: `win_${Date.now()}`,
-      x: Math.max(0, Math.min(gridSpec.cols - allowed.width, pos.x)),
-      y: Math.max(0, Math.min(gridSpec.rows - allowed.height, pos.y)),
-      width: allowed.width,
-      height: allowed.height,
-      ...base
+      x,
+      y,
+      width,
+      height
     };
     onWindowsChange?.((prev) => [...prev, win]);
     setPacked((prev) => [...prev, win]);
     setDragPreview(null);
-  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, onWindowsChange]);
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, onWindowsChange, dragPreview]);
 
   // Compute and show ghost window while dragging over the grid
   const handleExternalDragOver = useCallback((e) => {
@@ -363,10 +378,11 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     const scrollY = containerRef.current.scrollTop || 0;
     const clientX = e.clientX - rect.left + scrollX;
     const clientY = e.clientY - rect.top + scrollY;
-    const startX = Math.max(0, Math.round((clientX - gridSpec.offsetLeft) / cellSize));
-    const startY = Math.max(0, Math.round((clientY - gridSpec.offsetTop) / cellSize));
-
     const base = (windowFactory || defaultWindowFactory)(type);
+    const centerX = (clientX - gridSpec.offsetLeft) / cellSize;
+    const centerY = (clientY - gridSpec.offsetTop) / cellSize;
+    const startX = Math.max(0, Math.round(centerX - base.width / 2));
+    const startY = Math.max(0, Math.round(centerY - base.height / 2));
     const minW = Math.max(1, base.minWidth || 1);
     const minH = Math.max(1, base.minHeight || 1);
     const allowed = computeAllowedSize(startX, startY, base.width, base.height, minW, minH);
