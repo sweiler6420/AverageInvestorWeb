@@ -10,6 +10,7 @@ export default function Window({
   height,
   zIndex,
   isFullscreen,
+  hidden,
   onMinimize,
   onMaximize,
   onFullscreen,
@@ -33,7 +34,8 @@ export default function Window({
     width: `${width}px`,
     height: `${height}px`,
     zIndex: zIndex || 1,
-    cursor: 'default'
+    cursor: 'default',
+    display: hidden ? 'none' : undefined
   };
 
   const innerStyle = {

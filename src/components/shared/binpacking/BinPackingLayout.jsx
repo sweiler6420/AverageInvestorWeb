@@ -106,7 +106,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
   }, [gridSpec.cols, gridSpec.rows, isCollision]);
 
   // Fit a ghost rectangle centered at (cX, cY) by shrinking stepwise while keeping it centered.
-  const fitCenteredGhost = useCallback((cX, cY, reqW, reqH, minW, minH) => {
+  const fitCenteredGhost = useCallback((cX, cY, reqW, reqH, minW, minH, excludeId) => {
     let w = Math.max(minW, Math.min(reqW, gridSpec.cols));
     let h = Math.max(minH, Math.min(reqH, gridSpec.rows));
     let guard = 0;
@@ -119,7 +119,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
       const outRight = x + w > gridSpec.cols;
       const outTop = y < 0;
       const outBottom = y + h > gridSpec.rows;
-      const collided = !outLeft && !outRight && !outTop && !outBottom && isCollision(x, y, w, h);
+      const collided = !outLeft && !outRight && !outTop && !outBottom && isCollision(x, y, w, h, excludeId);
       if (!outLeft && !outRight && !outTop && !outBottom && !collided) {
         return { x, y, width: w, height: h };
       }
@@ -136,8 +136,8 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
       // If we reach here and can't shrink further, try to reposition near the cursor without overlap
       const startX = Math.round(cX - w / 2);
       const startY = Math.round(cY - h / 2);
-      const pos = findNearestValidPosition(startX, startY, w, h);
-      if (!isCollision(pos.x, pos.y, w, h)) {
+      const pos = findNearestValidPosition(startX, startY, w, h, excludeId);
+      if (!isCollision(pos.x, pos.y, w, h, excludeId)) {
         return { x: Math.max(0, Math.min(pos.x, gridSpec.cols - w)), y: Math.max(0, Math.min(pos.y, gridSpec.rows - h)), width: w, height: h };
       }
       // No fit available
@@ -261,11 +261,21 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     if (!dragState && !resizeState) return;
     const onMove = (e) => {
       if (dragState) {
-        const el = document.querySelector(`[data-window-id="${dragState.id}"]`);
-        if (!el) return;
-        const dx = e.clientX - dragState.startX;
-        const dy = e.clientY - dragState.startY;
-        el.style.transform = `translate(${dx}px, ${dy}px)`;
+        const moving = packed.find((w) => w.id === dragState.id);
+        if (!moving || !containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const scrollX = containerRef.current.scrollLeft || 0;
+        const scrollY = containerRef.current.scrollTop || 0;
+        const clientX = e.clientX - rect.left + scrollX;
+        const clientY = e.clientY - rect.top + scrollY;
+        const centerX = (clientX - gridSpec.offsetLeft) / cellSize;
+        const centerY = (clientY - gridSpec.offsetTop) / cellSize;
+        const fit = fitCenteredGhost(centerX, centerY, moving.width, moving.height, moving.width, moving.height, moving.id);
+        if (fit) {
+          setDragPreview({ x: fit.x, y: fit.y, width: fit.width, height: fit.height, color: moving.color });
+        } else {
+          setDragPreview(null);
+        }
       } else if (resizeState) {
         const el = document.querySelector(`[data-window-id="${resizeState.id}"]`);
         if (!el) return;
@@ -286,19 +296,30 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     };
     const onUp = (e) => {
       if (dragState) {
-        const dx = e.clientX - dragState.startX;
-        const dy = e.clientY - dragState.startY;
         const moved = packed.find((w) => w.id === dragState.id);
         if (moved) {
-          const px = toPixels(moved.x, moved.y, moved.width, moved.height);
-          const newLeft = px.left + dx - gridSpec.offsetLeft;
-          const newTop = px.top + dy - gridSpec.offsetTop;
-          const targetX = Math.max(0, Math.min(gridSpec.cols - moved.width, Math.round(newLeft / cellSize)));
-          const targetY = Math.max(0, Math.min(gridSpec.rows - moved.height, Math.round(newTop / cellSize)));
-          const pos = findNearestValidPosition(targetX, targetY, moved.width, moved.height, moved.id);
-          const updated = packed.map((w) => (w.id === moved.id ? { ...w, x: pos.x, y: pos.y } : w));
-          onWindowsChange?.((prev) => prev.map((w) => (w.id === moved.id ? { ...w, x: pos.x, y: pos.y } : w)));
-          setPacked(updated);
+          if (dragPreview) {
+            const updated = packed.map((w) => (w.id === moved.id ? { ...w, x: dragPreview.x, y: dragPreview.y } : w));
+            onWindowsChange?.((prev) => prev.map((w) => (w.id === moved.id ? { ...w, x: dragPreview.x, y: dragPreview.y } : w)));
+            setPacked(updated);
+          } else {
+            // Fallback to nearest valid position based on cursor
+            if (containerRef.current) {
+              const rect = containerRef.current.getBoundingClientRect();
+              const scrollX = containerRef.current.scrollLeft || 0;
+              const scrollY = containerRef.current.scrollTop || 0;
+              const clientX = e.clientX - rect.left + scrollX;
+              const clientY = e.clientY - rect.top + scrollY;
+              const centerX = (clientX - gridSpec.offsetLeft) / cellSize;
+              const centerY = (clientY - gridSpec.offsetTop) / cellSize;
+              const desiredX = Math.round(centerX - moved.width / 2);
+              const desiredY = Math.round(centerY - moved.height / 2);
+              const pos = findNearestValidPosition(desiredX, desiredY, moved.width, moved.height, moved.id);
+              const updated = packed.map((w) => (w.id === moved.id ? { ...w, x: pos.x, y: pos.y } : w));
+              onWindowsChange?.((prev) => prev.map((w) => (w.id === moved.id ? { ...w, x: pos.x, y: pos.y } : w)));
+              setPacked(updated);
+            }
+          }
         }
       } else if (resizeState) {
         const resized = packed.find((w) => w.id === resizeState.id);
@@ -332,6 +353,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
       }
       setActiveId(null);
       setDragState(null);
+      setDragPreview(null);
       setResizeState(null);
       const els = document.querySelectorAll('[data-window-id]');
       els.forEach((el) => { el.style.transform = 'translate(0px, 0px)'; });
@@ -548,6 +570,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
             const px = isFs
               ? { left: gridSpec.offsetLeft, top: gridSpec.offsetTop, width: gridSpec.innerW, height: gridSpec.innerH }
               : toPixels(w.x, w.y, w.width, w.height);
+            const isBeingDragged = dragState && dragState.id === w.id;
             return (
               <Window
                 key={w.id}
@@ -559,6 +582,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
                 width={px.width}
                 height={px.height}
                 isFullscreen={isFs}
+                hidden={!!isBeingDragged && !!dragPreview}
                 zIndex={isFs ? 100 : activeId === w.id ? 10 : 1}
                 onMinimize={(id) => {
                   const minimized = packed.map((x) => (x.id === id ? { ...x, width: Math.max(1, x.minWidth || 1), height: Math.max(1, x.minHeight || 1) } : x));
