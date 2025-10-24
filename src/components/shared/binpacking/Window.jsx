@@ -33,7 +33,7 @@ export default function Window({
     width: `${width}px`,
     height: `${height}px`,
     zIndex: zIndex || 1,
-    cursor: 'move',
+    cursor: isFullscreen ? 'default' : 'move',
     userSelect: 'none'
   };
 
@@ -108,6 +108,7 @@ export default function Window({
   });
 
   const handleMouseDown = (e) => {
+    if (isFullscreen) return;
     const isButton = e.target.getAttribute('data-role') === 'control';
     const isResize = e.target.getAttribute('data-role') === 'resize-handle' || e.target.closest('[data-role="resize-handle"]');
     if (isButton || isResize) return;
@@ -131,12 +132,14 @@ export default function Window({
             {children}
           </div>
         </div>
-        <div data-role="resize-handle" style={resizeHandleStyle} onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, id); }}>
-          {/* visual chevron substitute */}
-          <svg width="100%" height="100%" style={{ transform: 'rotate(45deg)' }}>
-            <path d="M2 8 L8 2" stroke="white" strokeWidth="2" />
-          </svg>
-        </div>
+        {!isFullscreen && (
+          <div data-role="resize-handle" style={resizeHandleStyle} onMouseDown={(e) => { e.stopPropagation(); onResizeStart?.(e, id); }}>
+            {/* visual chevron substitute */}
+            <svg width="100%" height="100%" style={{ transform: 'rotate(45deg)' }}>
+              <path d="M2 8 L8 2" stroke="white" strokeWidth="2" />
+            </svg>
+          </div>
+        )}
       </div>
     </div>
   );

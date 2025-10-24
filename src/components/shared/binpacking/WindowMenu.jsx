@@ -10,11 +10,11 @@ const WindowMenu = () => {
     e.dataTransfer.effectAllowed = 'copy';
   };
 
-  const itemBase = 'cursor-move select-none text-white px-3 py-2 rounded shadow-sm font-gothic text-sm';
+  const itemBase = 'cursor-move select-none text-white px-3 py-2 rounded shadow-sm font-demi text-sm';
 
   return (
     <div className="flex items-center gap-2">
-      <div className="text-xs text-gray-500 mr-2 font-gothic">Drag into grid:</div>
+      <div className="font-gothic font-medium text-md font-neutral-500 mr-2">Drag into grid:</div>
       <div
         draggable
         onDragStart={handleDragStart('blue')}

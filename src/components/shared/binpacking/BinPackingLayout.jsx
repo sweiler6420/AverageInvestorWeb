@@ -40,6 +40,9 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
   const [resizeState, setResizeState] = useState(null); // {id, startX, startY, originW, originH}
   const [activeId, setActiveId] = useState(null);
   const [dragPreview, setDragPreview] = useState(null); // {x,y,width,height,color}
+  const [fullscreenId, setFullscreenId] = useState(null);
+  const [fullscreenPrev, setFullscreenPrev] = useState(null); // {x,y,width,height}
+  const prevGridRef = useRef({ cols: 0, rows: 0 });
 
   // Collision helpers (grid units)
   const rectsOverlap = useCallback((a, b) => {
@@ -142,11 +145,29 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
   // Reflow windows deterministically when inputs change
   useLayoutEffect(() => {
     if (!isGridReady) return;
+    if (fullscreenId) return; // Skip reflow while fullscreened
     const { cols, rows } = gridSpec;
     const { next } = reflowScaleByOverlap({ windows: packed, cols, rows });
     setPacked(next);
     onWindowsChange?.(() => next);
-  }, [isGridReady, gridSpec.cols, gridSpec.rows]);
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, fullscreenId]);
+
+  // If grid size changes while a window is fullscreen, exit fullscreen and restore previous rect
+  useEffect(() => {
+    const { cols, rows } = gridSpec;
+    const prev = prevGridRef.current;
+    const changed = cols !== prev.cols || rows !== prev.rows;
+    if (changed && fullscreenId) {
+      if (fullscreenPrev) {
+        const updated = packed.map((w) => (w.id === fullscreenId ? { ...w, ...fullscreenPrev } : w));
+        setPacked(updated);
+        onWindowsChange?.(() => updated);
+      }
+      setFullscreenId(null);
+      setFullscreenPrev(null);
+    }
+    prevGridRef.current = { cols, rows };
+  }, [gridSpec.cols, gridSpec.rows, fullscreenId, fullscreenPrev, packed, onWindowsChange]);
 
   // Imperative helpers
   useImperativeHandle(ref, () => ({
@@ -317,6 +338,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
   const handleExternalDrop = useCallback((e) => {
     e.preventDefault();
     if (!isGridReady || !containerRef.current) return;
+    if (fullscreenId) return; // disable dropping while fullscreen
     const raw = e.dataTransfer.getData('application/json') || e.dataTransfer.getData('text/plain');
     let payload = {};
     try { payload = JSON.parse(raw); } catch {}
@@ -361,11 +383,12 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     onWindowsChange?.((prev) => [...prev, win]);
     setPacked((prev) => [...prev, win]);
     setDragPreview(null);
-  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, onWindowsChange, dragPreview]);
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, onWindowsChange, dragPreview, fullscreenId]);
 
   // Compute and show ghost window while dragging over the grid
   const handleExternalDragOver = useCallback((e) => {
     if (!isGridReady || !containerRef.current) return;
+    if (fullscreenId) return; // do not preview while fullscreen
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
     const raw = e.dataTransfer.getData('application/json') || e.dataTransfer.getData('text/plain');
@@ -391,7 +414,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     const y = Math.max(0, Math.min(gridSpec.rows - allowed.height, pos.y));
 
     setDragPreview({ x, y, width: allowed.width, height: allowed.height, color: base.color });
-  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition]);
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, fullscreenId]);
 
   const handleExternalDragLeave = useCallback(() => {
     setDragPreview(null);
@@ -438,8 +461,26 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
               />
             );
           })()}
+          {/* Overlay to block interactions when fullscreen is active */}
+          {fullscreenId && (
+            <div
+              style={{
+                position: 'absolute',
+                left: gridSpec.offsetLeft,
+                top: gridSpec.offsetTop,
+                width: gridSpec.innerW,
+                height: gridSpec.innerH,
+                zIndex: 50,
+                // Transparent overlay that captures events
+                background: 'transparent'
+              }}
+            />
+          )}
           {packed.map((w) => {
-            const px = toPixels(w.x, w.y, w.width, w.height);
+            const isFs = fullscreenId === w.id;
+            const px = isFs
+              ? { left: gridSpec.offsetLeft, top: gridSpec.offsetTop, width: gridSpec.innerW, height: gridSpec.innerH }
+              : toPixels(w.x, w.y, w.width, w.height);
             return (
               <Window
                 key={w.id}
@@ -450,8 +491,8 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
                 top={px.top}
                 width={px.width}
                 height={px.height}
-                isFullscreen={false}
-                zIndex={activeId === w.id ? 10 : 1}
+                isFullscreen={isFs}
+                zIndex={isFs ? 100 : activeId === w.id ? 10 : 1}
                 onMinimize={(id) => {
                   const minimized = packed.map((x) => (x.id === id ? { ...x, width: Math.max(1, x.minWidth || 1), height: Math.max(1, x.minHeight || 1) } : x));
                   onWindowsChange?.((prev) => prev.map((p) => (p.id === id ? { ...p, width: Math.max(1, p.minWidth || 1), height: Math.max(1, p.minHeight || 1) } : p)));
@@ -482,7 +523,23 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
                   onWindowsChange?.((prev) => prev.map((p) => (p.id === id ? { ...p, x: newX, y: newY, width: newW, height: newH } : p)));
                   setPacked(updated);
                 }}
-                onFullscreen={() => {}}
+                onFullscreen={(id) => {
+                  if (fullscreenId === id) {
+                    // Exit fullscreen: restore previous rect
+                    if (fullscreenPrev) {
+                      const updated = packed.map((w2) => (w2.id === id ? { ...w2, ...fullscreenPrev } : w2));
+                      setPacked(updated);
+                      onWindowsChange?.(() => updated);
+                    }
+                    setFullscreenId(null);
+                    setFullscreenPrev(null);
+                  } else if (!fullscreenId) {
+                    const cur = packed.find((x) => x.id === id);
+                    if (!cur) return;
+                    setFullscreenPrev({ x: cur.x, y: cur.y, width: cur.width, height: cur.height });
+                    setFullscreenId(id);
+                  }
+                }}
                 onClose={(id) => {
                   onWindowsChange?.((prev) => prev.filter((p) => p.id !== id));
                 }}

@@ -43,7 +43,7 @@ const InteractiveDesktop = () => {
 
     return (
         <div className="w-full h-full flex flex-col">
-            <div className="p-2 border-b border-neutral-200 bg-white/70 backdrop-blur">
+            <div className="rounded-lg p-2 border border-neutral-500 bg-white/50 backdrop-blur">
                 <WindowMenu />
             </div>
             <div className="flex-1">
@@ -56,7 +56,7 @@ const InteractiveDesktop = () => {
                     onWindowsChange={setWindows}
                 />
             </div>
-            <div className="text-sm text-gray-600 font-gothic font-xl px-2 rounded m-2 text-center">
+            <div className="font-gothic font-medium text-sm font-neutral-500 px-2 rounded m-2 text-center">
                 Bin Packing Layout - Drag windows, they'll pack efficiently without overlaps
             </div>
         </div>
