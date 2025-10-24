@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import BinPackingLayout from '../shared/binpacking/BinPackingLayout'
+import WindowMenu from '../shared/binpacking/WindowMenu'
 
 const InteractiveDesktop = () => {
     const apiRef = useRef(null);
@@ -42,6 +43,9 @@ const InteractiveDesktop = () => {
 
     return (
         <div className="w-full h-full flex flex-col">
+            <div className="p-2 border-b border-neutral-200 bg-white/70 backdrop-blur">
+                <WindowMenu />
+            </div>
             <div className="flex-1">
                 <BinPackingLayout
                     ref={apiRef}

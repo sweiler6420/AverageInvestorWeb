@@ -27,7 +27,8 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     allowOverflowScroll = true,
     windows = [],
     onWindowsChange,
-    reflowStrategy = 'conservative'
+    reflowStrategy = 'conservative',
+    windowFactory
   },
   ref
 ) {
@@ -292,8 +293,66 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     pointerEvents: 'none'
   }), [centerGrid, gridSpec.offsetLeft, gridSpec.offsetTop, gridSpec.innerW, gridSpec.innerH]);
 
+  // Default factory for creating a window from a type
+  const defaultWindowFactory = useMemo(() => (type) => {
+    const color = type === 'green' ? '#22c55e' : type === 'red' ? '#ef4444' : '#3b82f6';
+    const title = type === 'green' ? 'Green Window' : type === 'red' ? 'Red Window' : 'Blue Window';
+    return {
+      title,
+      color,
+      width: 6,
+      height: 4,
+      minWidth: 5,
+      minHeight: 4,
+      content: (
+        <div className="font-gothic font-medium text-md p-2 text-neutral-500">
+          {`Hello from ${title}`}
+        </div>
+      )
+    };
+  }, []);
+
+  // Handle external drop to create new windows via menu drag-and-drop
+  const handleExternalDrop = useCallback((e) => {
+    e.preventDefault();
+    if (!isGridReady || !containerRef.current) return;
+    const raw = e.dataTransfer.getData('application/json') || e.dataTransfer.getData('text/plain');
+    let payload = {};
+    try { payload = JSON.parse(raw); } catch {}
+    const type = payload?.type || 'blue';
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const scrollX = containerRef.current.scrollLeft || 0;
+    const scrollY = containerRef.current.scrollTop || 0;
+    const clientX = e.clientX - rect.left + scrollX;
+    const clientY = e.clientY - rect.top + scrollY;
+    const startX = Math.max(0, Math.round((clientX - gridSpec.offsetLeft) / cellSize));
+    const startY = Math.max(0, Math.round((clientY - gridSpec.offsetTop) / cellSize));
+
+    const base = (windowFactory || defaultWindowFactory)(type);
+    const minW = Math.max(1, base.minWidth || 1);
+    const minH = Math.max(1, base.minHeight || 1);
+    const allowed = computeAllowedSize(startX, startY, base.width, base.height, minW, minH);
+    const pos = findNearestValidPosition(startX, startY, allowed.width, allowed.height);
+    const win = {
+      id: `win_${Date.now()}`,
+      x: Math.max(0, Math.min(gridSpec.cols - allowed.width, pos.x)),
+      y: Math.max(0, Math.min(gridSpec.rows - allowed.height, pos.y)),
+      width: allowed.width,
+      height: allowed.height,
+      ...base
+    };
+    onWindowsChange?.((prev) => [...prev, win]);
+    setPacked((prev) => [...prev, win]);
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, onWindowsChange]);
+
   return (
-    <div ref={containerRef} style={containerStyle}>
+    <div
+      ref={containerRef}
+      style={containerStyle}
+      onDragOver={(e) => { if (isGridReady) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } }}
+      onDrop={handleExternalDrop}
+    >
       {isGridReady && (
         <>
           <div style={gridStyle}>
