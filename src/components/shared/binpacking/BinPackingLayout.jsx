@@ -341,13 +341,13 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
         return window.__BINPACKING_DRAG;
       }
     } catch {}
-    const key = payload?.type || payload?.name || 'blue';
+    const key = payload?.type || payload?.name;
+    if (!key) return null; // require an explicit key to avoid accidental drops
     return (windowFactory || defaultWindowFactory)(key);
   }, [windowFactory, defaultWindowFactory]);
 
   // Handle external drop to create new windows via menu drag-and-drop
   const handleExternalDrop = useCallback((e) => {
-    e.preventDefault();
     if (!isGridReady || !containerRef.current) return;
     if (fullscreenId) return; // disable dropping while fullscreen
     const raw = e.dataTransfer.getData('application/json') || e.dataTransfer.getData('text/plain');
@@ -359,6 +359,8 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     const clientX = e.clientX - rect.left + scrollX;
     const clientY = e.clientY - rect.top + scrollY;
     const base = resolveBaseWindow(payload);
+    if (!base) return; // ignore unrelated drops
+    e.preventDefault();
 
     let x; let y; let width; let height;
     if (dragPreview) {
@@ -399,17 +401,22 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
   const handleExternalDragOver = useCallback((e) => {
     if (!isGridReady || !containerRef.current) return;
     if (fullscreenId) return; // do not preview while fullscreen
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
     const raw = e.dataTransfer.getData('application/json') || e.dataTransfer.getData('text/plain');
     let payload = {};
     try { payload = JSON.parse(raw); } catch {}
+    const base = resolveBaseWindow(payload);
+    if (!base) {
+      setDragPreview(null);
+      e.dataTransfer.dropEffect = 'none';
+      return; // ignore unrelated drags
+    }
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
     const rect = containerRef.current.getBoundingClientRect();
     const scrollX = containerRef.current.scrollLeft || 0;
     const scrollY = containerRef.current.scrollTop || 0;
     const clientX = e.clientX - rect.left + scrollX;
     const clientY = e.clientY - rect.top + scrollY;
-    const base = resolveBaseWindow(payload);
     const centerX = (clientX - gridSpec.offsetLeft) / cellSize;
     const centerY = (clientY - gridSpec.offsetTop) / cellSize;
     const startX = Math.max(0, Math.round(centerX - base.width / 2));
@@ -509,24 +516,36 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
                 onMaximize={(id) => {
                   const target = packed.find((tw) => tw.id === id);
                   if (!target) return;
-                  // Expand left and up first
                   let newX = target.x;
                   let newY = target.y;
-                  // move left while no collision and within bounds
-                  while (newX > 0 && !isCollision(newX - 1, newY, target.width, target.height, id)) newX -= 1;
-                  // move up while no collision and within bounds
-                  while (newY > 0 && !isCollision(newX, newY - 1, target.width, target.height, id)) newY -= 1;
-                  // then expand right and down to max allowed size
                   let newW = target.width;
                   let newH = target.height;
                   const minW = Math.max(1, target.minWidth || 1);
                   const minH = Math.max(1, target.minHeight || 1);
-                  // grow width
-                  while (newX + newW < gridSpec.cols && !isCollision(newX, newY, newW + 1, newH, id)) newW += 1;
-                  // grow height
-                  while (newY + newH < gridSpec.rows && !isCollision(newX, newY, newW, newH + 1, id)) newH += 1;
+                  // Step 1: move up while preserving bottom edge (increase height as we move up)
+                  while (
+                    newY > 0 &&
+                    !isCollision(newX, newY - 1, newW, newH + 1, id)
+                  ) {
+                    newY -= 1;
+                    newH += 1; // keep bottom edge anchored
+                  }
+                  // Step 2: expand left while keeping the right edge fixed (move left & widen)
+                  // For each step left, also increase width by 1 so right edge stays constant
+                  while (
+                    newX > 0 &&
+                    !isCollision(newX - 1, newY, newW + 1, newH, id)
+                  ) {
+                    newX -= 1;
+                    newW += 1;
+                  }
+                  // Ensure we never go below minimums
                   newW = Math.max(minW, newW);
                   newH = Math.max(minH, newH);
+                  // Step 3: expand to the right
+                  while (newX + newW < gridSpec.cols && !isCollision(newX, newY, newW + 1, newH, id)) newW += 1;
+                  // Step 4: expand downwards
+                  while (newY + newH < gridSpec.rows && !isCollision(newX, newY, newW, newH + 1, id)) newH += 1;
                   const updated = packed.map((x) => (x.id === id ? { ...x, x: newX, y: newY, width: newW, height: newH } : x));
                   onWindowsChange?.((prev) => prev.map((p) => (p.id === id ? { ...p, x: newX, y: newY, width: newW, height: newH } : p)));
                   setPacked(updated);
@@ -549,7 +568,14 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
                   }
                 }}
                 onClose={(id) => {
-                  onWindowsChange?.((prev) => prev.filter((p) => p.id !== id));
+                  if (fullscreenId === id) {
+                    // Exit fullscreen state first; no need to restore geometry since we're removing
+                    setFullscreenId(null);
+                    setFullscreenPrev(null);
+                  }
+                  const filtered = packed.filter((p) => p.id !== id);
+                  setPacked(filtered);
+                  onWindowsChange?.(() => filtered);
                 }}
                 onDragStart={onDragStart}
                 onResizeStart={onResizeStart}
