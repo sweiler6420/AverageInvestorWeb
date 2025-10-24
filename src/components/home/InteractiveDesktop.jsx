@@ -1,9 +1,53 @@
 import React, { useState, useEffect, useRef } from 'react'
 import BinPackingLayout from '../shared/binpacking/BinPackingLayout'
 import WindowMenu from '../shared/binpacking/WindowMenu'
+import CounterWidget from '../shared/widgets/CounterWidget'
+import TextInputWidget from '../shared/widgets/TextInputWidget'
+import StaticInfoWidget from '../shared/widgets/StaticInfoWidget'
 
 const InteractiveDesktop = () => {
     const apiRef = useRef(null);
+    const menuItems = [
+        {
+            name: 'Blue',
+            color: '#3b82f6',
+            window: {
+                title: 'Bin Packing Window (Blue)',
+                color: '#3b82f6',
+                width: 10,
+                height: 8,
+                minWidth: 5,
+                minHeight: 4,
+                content: <CounterWidget />
+            }
+        },
+        {
+            name: 'Green',
+            color: '#22c55e',
+            window: {
+                title: 'Bin Packing Window (Green)',
+                color: '#22c55e',
+                width: 10,
+                height: 8,
+                minWidth: 5,
+                minHeight: 4,
+                content: <TextInputWidget />
+            }
+        },
+        {
+            name: 'Red',
+            color: '#ef4444',
+            window: {
+                title: 'Bin Packing Window (Red)',
+                color: '#ef4444',
+                width: 10,
+                height: 8,
+                minWidth: 5,
+                minHeight: 4,
+                content: <StaticInfoWidget />
+            }
+        }
+    ];
     const [windows, setWindows] = useState(() => [
         {
             id: 'win1',
@@ -44,7 +88,7 @@ const InteractiveDesktop = () => {
     return (
         <div className="w-full h-full flex flex-col">
             <div className="rounded-lg p-2 border border-neutral-500 bg-white/50 backdrop-blur">
-                <WindowMenu />
+                <WindowMenu items={menuItems} />
             </div>
             <div className="flex-1">
                 <BinPackingLayout

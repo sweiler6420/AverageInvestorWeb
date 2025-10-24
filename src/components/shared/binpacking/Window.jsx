@@ -33,8 +33,7 @@ export default function Window({
     width: `${width}px`,
     height: `${height}px`,
     zIndex: zIndex || 1,
-    cursor: isFullscreen ? 'default' : 'move',
-    userSelect: 'none'
+    cursor: 'default'
   };
 
   const innerStyle = {
@@ -83,10 +82,14 @@ export default function Window({
     background: 'rgba(255, 255, 255, 0.1)',
     borderRadius: '0.25rem',
     padding: '0.25rem',
-    marginBottom: '0.25rem',
     flex: 1,
     minHeight: 0,
-    width: '100%'
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'auto'
   };
 
   const resizeHandleStyle = {
@@ -112,13 +115,15 @@ export default function Window({
     const isButton = e.target.getAttribute('data-role') === 'control';
     const isResize = e.target.getAttribute('data-role') === 'resize-handle' || e.target.closest('[data-role="resize-handle"]');
     if (isButton || isResize) return;
+    const headerEl = e.target.closest('[data-role="header"]');
+    if (!headerEl) return; // only drag when starting from header
     onDragStart(e, id);
   };
 
   return (
     <div ref={ref} style={outerStyle} onMouseDown={handleMouseDown} data-window-id={id}>
       <div style={innerStyle}>
-        <div style={{ ...headerStyle, background: color || headerStyle.background }}>
+        <div data-role="header" style={{ ...headerStyle, background: color || headerStyle.background, cursor: isFullscreen ? 'default' : 'move', userSelect: 'none' }}>
           <span style={titleStyle}>{title}</span>
           <div style={{ display: 'flex', gap: '0.25rem' }}>
             <button data-role="control" onClick={(e) => { e.stopPropagation(); onMinimize?.(id); }} style={controlDot('#facc15')} title="Minimize" />

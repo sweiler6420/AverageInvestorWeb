@@ -334,6 +334,17 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     };
   }, []);
 
+  // Resolve a base window definition from drag payload or fallback to factory
+  const resolveBaseWindow = useCallback((payload) => {
+    try {
+      if (typeof window !== 'undefined' && window.__BINPACKING_DRAG && typeof window.__BINPACKING_DRAG === 'object') {
+        return window.__BINPACKING_DRAG;
+      }
+    } catch {}
+    const key = payload?.type || payload?.name || 'blue';
+    return (windowFactory || defaultWindowFactory)(key);
+  }, [windowFactory, defaultWindowFactory]);
+
   // Handle external drop to create new windows via menu drag-and-drop
   const handleExternalDrop = useCallback((e) => {
     e.preventDefault();
@@ -342,14 +353,12 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     const raw = e.dataTransfer.getData('application/json') || e.dataTransfer.getData('text/plain');
     let payload = {};
     try { payload = JSON.parse(raw); } catch {}
-    const type = payload?.type || 'blue';
-
     const rect = containerRef.current.getBoundingClientRect();
     const scrollX = containerRef.current.scrollLeft || 0;
     const scrollY = containerRef.current.scrollTop || 0;
     const clientX = e.clientX - rect.left + scrollX;
     const clientY = e.clientY - rect.top + scrollY;
-    const base = (windowFactory || defaultWindowFactory)(type);
+    const base = resolveBaseWindow(payload);
 
     let x; let y; let width; let height;
     if (dragPreview) {
@@ -383,7 +392,8 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     onWindowsChange?.((prev) => [...prev, win]);
     setPacked((prev) => [...prev, win]);
     setDragPreview(null);
-  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, onWindowsChange, dragPreview, fullscreenId]);
+    try { if (typeof window !== 'undefined' && window.__BINPACKING_DRAG) window.__BINPACKING_DRAG = null; } catch {}
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, resolveBaseWindow, computeAllowedSize, findNearestValidPosition, onWindowsChange, dragPreview, fullscreenId]);
 
   // Compute and show ghost window while dragging over the grid
   const handleExternalDragOver = useCallback((e) => {
@@ -394,14 +404,12 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     const raw = e.dataTransfer.getData('application/json') || e.dataTransfer.getData('text/plain');
     let payload = {};
     try { payload = JSON.parse(raw); } catch {}
-    const type = payload?.type || 'blue';
-
     const rect = containerRef.current.getBoundingClientRect();
     const scrollX = containerRef.current.scrollLeft || 0;
     const scrollY = containerRef.current.scrollTop || 0;
     const clientX = e.clientX - rect.left + scrollX;
     const clientY = e.clientY - rect.top + scrollY;
-    const base = (windowFactory || defaultWindowFactory)(type);
+    const base = resolveBaseWindow(payload);
     const centerX = (clientX - gridSpec.offsetLeft) / cellSize;
     const centerY = (clientY - gridSpec.offsetTop) / cellSize;
     const startX = Math.max(0, Math.round(centerX - base.width / 2));
@@ -414,7 +422,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     const y = Math.max(0, Math.min(gridSpec.rows - allowed.height, pos.y));
 
     setDragPreview({ x, y, width: allowed.width, height: allowed.height, color: base.color });
-  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, fullscreenId]);
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, resolveBaseWindow, computeAllowedSize, findNearestValidPosition, fullscreenId]);
 
   const handleExternalDragLeave = useCallback(() => {
     setDragPreview(null);
