@@ -84,16 +84,68 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
   const computeAllowedSize = useCallback((x, y, reqW, reqH, minW, minH, excludeId) => {
     let w = Math.max(minW, Math.min(reqW, gridSpec.cols - x));
     let h = Math.max(minH, Math.min(reqH, gridSpec.rows - y));
-    // Reduce until no collision
+    // Reduce stepwise; alternate shrinking width/height to avoid instant jumps on top/left
     let guard = 0;
-    while (isCollision(x, y, w, h, excludeId) && guard < 1000) {
+    let shrinkWidthNext = true;
+    while (isCollision(x, y, w, h, excludeId) && guard < 2000) {
       guard += 1;
-      if (w > minW) w -= 1;
-      else if (h > minH) h -= 1;
-      else break;
+      if (shrinkWidthNext && w > minW) {
+        w -= 1;
+      } else if (!shrinkWidthNext && h > minH) {
+        h -= 1;
+      } else if (w > minW) {
+        w -= 1;
+      } else if (h > minH) {
+        h -= 1;
+      } else {
+        break;
+      }
+      shrinkWidthNext = !shrinkWidthNext;
     }
     return { width: w, height: h };
   }, [gridSpec.cols, gridSpec.rows, isCollision]);
+
+  // Fit a ghost rectangle centered at (cX, cY) by shrinking stepwise while keeping it centered.
+  const fitCenteredGhost = useCallback((cX, cY, reqW, reqH, minW, minH) => {
+    let w = Math.max(minW, Math.min(reqW, gridSpec.cols));
+    let h = Math.max(minH, Math.min(reqH, gridSpec.rows));
+    let guard = 0;
+    let preferWidthNext = true;
+    while (guard < 2000) {
+      guard += 1;
+      const x = Math.round(cX - w / 2);
+      const y = Math.round(cY - h / 2);
+      const outLeft = x < 0;
+      const outRight = x + w > gridSpec.cols;
+      const outTop = y < 0;
+      const outBottom = y + h > gridSpec.rows;
+      const collided = !outLeft && !outRight && !outTop && !outBottom && isCollision(x, y, w, h);
+      if (!outLeft && !outRight && !outTop && !outBottom && !collided) {
+        return { x, y, width: w, height: h };
+      }
+      // Prefer shrinking in the dimension that violates bounds
+      if ((outLeft || outRight) && w > minW) { w -= 1; continue; }
+      if ((outTop || outBottom) && h > minH) { h -= 1; continue; }
+      // If colliding, alternate shrink direction to avoid large jumps
+      if (collided) {
+        if (preferWidthNext && w > minW) { w -= 1; preferWidthNext = false; continue; }
+        if (!preferWidthNext && h > minH) { h -= 1; preferWidthNext = true; continue; }
+        if (w > minW) { w -= 1; continue; }
+        if (h > minH) { h -= 1; continue; }
+      }
+      // If we reach here and can't shrink further, try to reposition near the cursor without overlap
+      const startX = Math.round(cX - w / 2);
+      const startY = Math.round(cY - h / 2);
+      const pos = findNearestValidPosition(startX, startY, w, h);
+      if (!isCollision(pos.x, pos.y, w, h)) {
+        return { x: Math.max(0, Math.min(pos.x, gridSpec.cols - w)), y: Math.max(0, Math.min(pos.y, gridSpec.rows - h)), width: w, height: h };
+      }
+      // No fit available
+      return null;
+    }
+    // As a last resort, report no fit
+    return null;
+  }, [gridSpec.cols, gridSpec.rows, isCollision, findNearestValidPosition]);
 
   // Measure container
   useLayoutEffect(() => {
@@ -372,15 +424,16 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     } else {
       const centerX = (clientX - gridSpec.offsetLeft) / cellSize;
       const centerY = (clientY - gridSpec.offsetTop) / cellSize;
-      const startX = Math.max(0, Math.round(centerX - base.width / 2));
-      const startY = Math.max(0, Math.round(centerY - base.height / 2));
       const minW = Math.max(1, base.minWidth || 1);
       const minH = Math.max(1, base.minHeight || 1);
-      const allowed = computeAllowedSize(startX, startY, base.width, base.height, minW, minH);
-      const pos = findNearestValidPosition(startX, startY, allowed.width, allowed.height);
-      width = allowed.width; height = allowed.height;
-      x = Math.max(0, Math.min(gridSpec.cols - width, pos.x));
-      y = Math.max(0, Math.min(gridSpec.rows - height, pos.y));
+      const fit = fitCenteredGhost(centerX, centerY, base.width, base.height, minW, minH);
+      if (!fit) {
+        // Hide ghost if no valid fit; ignore drop
+        setDragPreview(null);
+        return;
+      }
+      width = fit.width; height = fit.height;
+      x = fit.x; y = fit.y;
     }
 
     const win = {
@@ -419,17 +472,16 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     const clientY = e.clientY - rect.top + scrollY;
     const centerX = (clientX - gridSpec.offsetLeft) / cellSize;
     const centerY = (clientY - gridSpec.offsetTop) / cellSize;
-    const startX = Math.max(0, Math.round(centerX - base.width / 2));
-    const startY = Math.max(0, Math.round(centerY - base.height / 2));
     const minW = Math.max(1, base.minWidth || 1);
     const minH = Math.max(1, base.minHeight || 1);
-    const allowed = computeAllowedSize(startX, startY, base.width, base.height, minW, minH);
-    const pos = findNearestValidPosition(startX, startY, allowed.width, allowed.height);
-    const x = Math.max(0, Math.min(gridSpec.cols - allowed.width, pos.x));
-    const y = Math.max(0, Math.min(gridSpec.rows - allowed.height, pos.y));
-
-    setDragPreview({ x, y, width: allowed.width, height: allowed.height, color: base.color });
-  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, resolveBaseWindow, computeAllowedSize, findNearestValidPosition, fullscreenId]);
+    const fit = fitCenteredGhost(centerX, centerY, base.width, base.height, minW, minH);
+    if (!fit) {
+      setDragPreview(null);
+      e.dataTransfer.dropEffect = 'none';
+      return;
+    }
+    setDragPreview({ x: fit.x, y: fit.y, width: fit.width, height: fit.height, color: base.color });
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, resolveBaseWindow, fullscreenId, fitCenteredGhost]);
 
   const handleExternalDragLeave = useCallback(() => {
     setDragPreview(null);
