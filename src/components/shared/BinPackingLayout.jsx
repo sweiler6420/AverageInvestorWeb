@@ -57,10 +57,10 @@ const Window = ({
                     width: 'calc(100% - 8px)',  // Subtract 8px total (4px on each side)
                     height: 'calc(100% - 8px)', // Subtract 8px total (4px on each side)
                     margin: '4px',              // Center the inner div
-                    outline: '2px solid rgba(5, 15, 1, 0.29)',
-                    boxShadow: '0 8px 32px rgba(8, 8, 8, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(20px)',
-                    background: 'rgba(1, 175, 255, 0.34)',
+                    outline: '2px solid rgba(255, 255, 255, 0.29)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(5px)',
+                    background: 'rgba(var(--accent), 0.1)',
                 }}
             >
             
