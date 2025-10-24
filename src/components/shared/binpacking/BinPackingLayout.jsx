@@ -39,6 +39,7 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
   const [dragState, setDragState] = useState(null); // {id, startX, startY, originLeft, originTop}
   const [resizeState, setResizeState] = useState(null); // {id, startX, startY, originW, originH}
   const [activeId, setActiveId] = useState(null);
+  const [dragPreview, setDragPreview] = useState(null); // {x,y,width,height,color}
 
   // Collision helpers (grid units)
   const rectsOverlap = useCallback((a, b) => {
@@ -344,13 +345,49 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
     };
     onWindowsChange?.((prev) => [...prev, win]);
     setPacked((prev) => [...prev, win]);
+    setDragPreview(null);
   }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition, onWindowsChange]);
+
+  // Compute and show ghost window while dragging over the grid
+  const handleExternalDragOver = useCallback((e) => {
+    if (!isGridReady || !containerRef.current) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    const raw = e.dataTransfer.getData('application/json') || e.dataTransfer.getData('text/plain');
+    let payload = {};
+    try { payload = JSON.parse(raw); } catch {}
+    const type = payload?.type || 'blue';
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const scrollX = containerRef.current.scrollLeft || 0;
+    const scrollY = containerRef.current.scrollTop || 0;
+    const clientX = e.clientX - rect.left + scrollX;
+    const clientY = e.clientY - rect.top + scrollY;
+    const startX = Math.max(0, Math.round((clientX - gridSpec.offsetLeft) / cellSize));
+    const startY = Math.max(0, Math.round((clientY - gridSpec.offsetTop) / cellSize));
+
+    const base = (windowFactory || defaultWindowFactory)(type);
+    const minW = Math.max(1, base.minWidth || 1);
+    const minH = Math.max(1, base.minHeight || 1);
+    const allowed = computeAllowedSize(startX, startY, base.width, base.height, minW, minH);
+    const pos = findNearestValidPosition(startX, startY, allowed.width, allowed.height);
+    const x = Math.max(0, Math.min(gridSpec.cols - allowed.width, pos.x));
+    const y = Math.max(0, Math.min(gridSpec.rows - allowed.height, pos.y));
+
+    setDragPreview({ x, y, width: allowed.width, height: allowed.height, color: base.color });
+  }, [isGridReady, gridSpec.cols, gridSpec.rows, gridSpec.offsetLeft, gridSpec.offsetTop, cellSize, windowFactory, defaultWindowFactory, computeAllowedSize, findNearestValidPosition]);
+
+  const handleExternalDragLeave = useCallback(() => {
+    setDragPreview(null);
+  }, []);
 
   return (
     <div
       ref={containerRef}
       style={containerStyle}
-      onDragOver={(e) => { if (isGridReady) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } }}
+      onDragOver={handleExternalDragOver}
+      onDragEnter={handleExternalDragOver}
+      onDragLeave={handleExternalDragLeave}
       onDrop={handleExternalDrop}
     >
       {isGridReady && (
@@ -365,6 +402,26 @@ const BinPackingLayout = forwardRef(function BinPackingLayout(
               ))}
             </svg>
           </div>
+          {dragPreview && (() => {
+            const px = toPixels(dragPreview.x, dragPreview.y, dragPreview.width, dragPreview.height);
+            return (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: px.left,
+                  top: px.top,
+                  width: px.width,
+                  height: px.height,
+                  backgroundColor: dragPreview.color || '#3b82f6',
+                  opacity: 0.18,
+                  border: `2px dashed ${dragPreview.color || '#3b82f6'}`,
+                  borderRadius: 6,
+                  pointerEvents: 'none',
+                  zIndex: 5
+                }}
+              />
+            );
+          })()}
           {packed.map((w) => {
             const px = toPixels(w.x, w.y, w.width, w.height);
             return (
