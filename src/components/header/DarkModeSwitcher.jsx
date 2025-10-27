@@ -5,9 +5,12 @@ export default function Switcher() {
     const { theme, toggleTheme } = useDarkMode();
  
     return (
-        <div>
-            {theme === "dark" ? <SunIcon onClick={() => toggleTheme()} className='h-12 w-6 text-primary' aria-hidden='true' /> : 
-                <MoonIcon onClick={() => toggleTheme()} className='h-12 w-6 text-primary' aria-hidden='true' />}
-        </div>
+        <button aria-label='Toggle theme' onClick={() => toggleTheme()} className='rounded-md p-2 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800'>
+            {theme === "dark" ? (
+                <SunIcon className='h-5 w-5 text-brand-400' aria-hidden='true' />
+            ) : (
+                <MoonIcon className='h-5 w-5 text-brand-600' aria-hidden='true' />
+            )}
+        </button>
     );
 }

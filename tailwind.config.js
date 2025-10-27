@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+const colors = require('tailwindcss/colors')
 
 module.exports = {
   content: [
@@ -37,38 +38,9 @@ module.exports = {
     
     extend: {
       colors: {
-        'text': 'rgba(var(--text), 1)',
-        'reverse-text': 'rgba(var(--reverse-text), 1)',
-        'primary':  ({ opacityValue }) => {
-          if (opacityValue !== undefined) {
-            return `rgba(var(--primary), ${opacityValue})`
-          }
-          return `rgba(var(--primary), 1)`
-        },
-        'secondary':  ({ opacityValue }) => {
-          if (opacityValue !== undefined) {
-            return `rgba(var(--secondary), ${opacityValue})`
-          }
-          return `rgba(var(--secondary), 1)`
-        },
-        'accent':  ({ opacityValue }) => {
-          if (opacityValue !== undefined) {
-            return `rgba(var(--accent), ${opacityValue})`
-          }
-          return `rgba(var(--accent), 1)`
-        },
-        'accent-secondary':  ({ opacityValue }) => {
-          if (opacityValue !== undefined) {
-            return `rgba(var(--accent-secondary), ${opacityValue})`
-          }
-          return `rgba(var(--accent-secondary), 1)`
-        },
-        'background':  ({ opacityValue }) => {
-          if (opacityValue !== undefined) {
-            return `rgba(var(--background), ${opacityValue})`
-          }
-          return `rgba(var(--background), 1)`
-        },
+        // Semantic brand aliases with full shade scales
+        brand: colors.cyan,
+        neutral: colors.slate,
        },
       boxShadow: {
         DEFAULT: '0 0 5px 0px rgba(0, 0, 0, 0.1)',

@@ -55,13 +55,13 @@ export default function ChartV2() {
     }
 
     return (
-        <div className='bg-white dark:bg-black w-screen h-screen'>
+        <div className='bg-white dark:bg-neutral-950 w-screen h-screen'>
             <Grid rowHeight={30} draggableHandle="#dragMe" onResizeStop={handleResize}>
-                <div key="chart" data-grid={{x: 2, y: 0, w: 8, h: 15, maxW: 10, isBounded: true}} className='overflow-hidden border bg-background-sub dark:bg-background-sub outline outline-primary dark:outline-none dark:shadow-neon-primary-sm focus:bg-background dark:focus:bg-background'>
+                <div key="chart" data-grid={{x: 2, y: 0, w: 8, h: 15, maxW: 10, isBounded: true}} className='overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900'>
                     <div ref={chartRef} className="h-5/6 w-full">
                         <div className="flex relative justify-center align-middle hover:bg-secondary cursor-move">
                             <div id="dragMe" style={{position:"absolute", height:"100%", width:"100%"}}/>
-                            <div className="text-black dark:text-white">
+                            <div className="text-neutral-900 dark:text-neutral-200">
                                 Chart
                             </div>
                         </div>
@@ -72,10 +72,10 @@ export default function ChartV2() {
                         </div>
                     </div>
                 </div>
-                <div key="watchlist" data-grid={{x: 0, y: 0, w: 2, h: 9, maxW: 4, isBounded: true}} className='overflow-hidden border bg-background-sub dark:bg-background-sub outline outline-primary dark:outline-none dark:shadow-neon-primary-sm focus:bg-background dark:focus:bg-background'>
+                <div key="watchlist" data-grid={{x: 0, y: 0, w: 2, h: 9, maxW: 4, isBounded: true}} className='overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900'>
                     <div className="flex relative justify-center align-middle hover:bg-secondary cursor-move">
                         <div id="dragMe" style={{position:"absolute", height:"100%", width:"100%"}}/>
-                        <div className="text-black dark:text-white">
+                        <div className="text-neutral-900 dark:text-neutral-200">
                             Watchlist
                         </div>
                     </div>

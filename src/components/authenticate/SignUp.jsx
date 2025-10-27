@@ -108,10 +108,10 @@ export default function SignUp() {
     }
 
     return (
-        <div className='grid grid-cols-1 sm:grid-cols-2 h-screen w-full bg-background dark:bg-background'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 h-screen w-full bg-white dark:bg-neutral-950'>
             <div className='hidden sm:block'>
                 <img className='w-full h-full object-cover' src={loginImg} alt=''/>
-                <a className='absolute bottom-1 left-1 text-gray-800' href="http://www.freepik.com/free-ai-image/financial-investment-bull-market_65695918.htm#fromView=search&term=stock&page=1&position=24&track=ais_ai_generated">Image By WangXiNa</a>
+                <a className='absolute bottom-1 left-1 text-neutral-800 dark:text-neutral-300' href="http://www.freepik.com/free-ai-image/financial-investment-bull-market_65695918.htm#fromView=search&term=stock&page=1&position=24&track=ais_ai_generated">Image By WangXiNa</a>
             </div>
             <div className={styles.form_div}>
                 <form className={styles.form_style} onSubmit={signup}>
@@ -119,21 +119,21 @@ export default function SignUp() {
                     <div className={styles.form_input_div}>
                         <div className='relative'>
                             <label> Email: </label> 
-                            {emailError !== "" ? <label className='absolute text-red-acc dark:text-red-acc right-1'>{emailError}</label> : null}
+                            {emailError !== "" ? <label className='absolute text-red-600 dark:text-red-400 right-1'>{emailError}</label> : null}
                         </div>
-                        <input className={styles.form_input} type="text" onChange={event => setEmail(event.target.value)} value={email}/>
+                        <input className='border border-neutral-300 dark:border-neutral-700 rounded-xl mt-2 p-2 w-full bg-white dark:bg-neutral-900' type="text" onChange={event => setEmail(event.target.value)} value={email}/>
                     </div>
                     <div className={styles.form_input_div}>
                         <div className='relative'>
                             <label> Username: </label>
-                            {usernameError !== "" ? <label className='absolute text-red-acc dark:text-red-acc right-1'>{usernameError}</label> : null}
+                            {usernameError !== "" ? <label className='absolute text-red-600 dark:text-red-400 right-1'>{usernameError}</label> : null}
                         </div>
-                        <input className={styles.form_input} type="text" onChange={event => setUsername(event.target.value)} value={username}/>
+                        <input className='border border-neutral-300 dark:border-neutral-700 rounded-xl mt-2 p-2 w-full bg-white dark:bg-neutral-900' type="text" onChange={event => setUsername(event.target.value)} value={username}/>
                     </div>
                     <div className={styles.form_input_div}>
                         <div className='relative'>
                             <label> Password: </label>
-                            {passwordError !== "" ? <label className='absolute text-red-acc dark:text-red-acc right-1 underline' onMouseOver={() => setPasswordTT(true)} onMouseLeave={() => setPasswordTT(false)}>{passwordError}</label> : null}
+                            {passwordError !== "" ? <label className='absolute text-red-600 dark:text-red-400 right-1 underline' onMouseOver={() => setPasswordTT(true)} onMouseLeave={() => setPasswordTT(false)}>{passwordError}</label> : null}
                             {theme === "light" ?
                                 <Tooltip className='bg-red-500' show={passwordTT} color="#030104" backgroundColor="#f5f5f5" shadow="white" arrowAlign='end' position='bottom right' moveRight='-40px' textBoxWidth='auto'>
                                     <ul className='text-sm'>
@@ -154,20 +154,20 @@ export default function SignUp() {
                             }
                         </div>
                         <div className='relative'>
-                            <input className={styles.form_input} type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password}/> 
+                            <input className='border border-neutral-300 dark:border-neutral-700 rounded-xl mt-2 p-2 w-full bg-white dark:bg-neutral-900' type={visible ? "text" : "password"} onChange={event => setPassword(event.target.value)} value={password}/> 
                             <div className='absolute top-1 right-1'>
-                            {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6 text-primary pr-1' aria-hidden='true' /> : 
-                                    <EyeSlashIcon onClick={() => setVisible(true)} className='h-12 w-6 text-primary pr-1' aria-hidden='true' />}
+                            {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6 text-brand-600 dark:text-brand-400 pr-1' aria-hidden='true' /> : 
+                                    <EyeSlashIcon onClick={() => setVisible(true)} className='h-12 w-6 text-brand-600 dark:text-brand-400 pr-1' aria-hidden='true' />}
                             </div>
                         </div>
                     </div>
-                    <button className={styles.form_button}>Sign Up</button>
+                    <button className='w-full my-5 py-2 rounded-lg font-semibold bg-brand-600 dark:bg-brand-500 text-white hover:opacity-90'>Sign Up</button>
                     <div className='relative'>
                         {error && error.length !== 0 ?
-                            <p className='text-xs text-center text-red-acc dark:text-red-acc'>{error}</p>: null
+                            <p className='text-xs text-center text-red-600 dark:text-red-400'>{error}</p>: null
                         }
                     </div>
-                    <p onClick={() => {navigate("/login")}} className='text-sm text-text dark:text-text text-center hover:cursor-pointer hover:underline'>
+                    <p onClick={() => {navigate("/login")}} className='text-sm text-neutral-900 dark:text-neutral-200 text-center hover:cursor-pointer hover:underline'>
                         Already Have an Account? Log In Now!
                     </p>
                 </form>

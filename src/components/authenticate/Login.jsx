@@ -130,23 +130,23 @@ export default function Login() {
             <h1 className="text-4xl font-gothic font-xl mb-5">
                 Log In
             </h1>
-            <div className="p-4 sm:w-1/2 md:w-1/2 lg:w-1/3 xl:w-1/4 border border-neutral-700 rounded-xl">
+            <div className="p-4 sm:w-1/2 md:w-1/2 lg:w-1/3 xl:w-1/4 border border-neutral-200 dark:border-neutral-700 rounded-xl">
                 <form className='mx-5' onSubmit={signin}>
-                    <div className="flex flex-col text-text py-2">
+                    <div className="flex flex-col text-neutral-900 dark:text-neutral-200 py-2">
                         <div className='relative'>
                             <label className='font-gothic font-medium mb-2'> Username: </label> 
                             {loginError.username !== "" ? <label className='font-gothic font-medium absolute text-sm text-red-600 right-1 bottom-0'>{loginError.username}</label> : null}
                         </div>
-                        <input className="border border-neutral-700 rounded-xl focus:bg-background mt-2 p-2 w-full" 
+                        <input className="border border-neutral-300 dark:border-neutral-700 rounded-xl mt-2 p-2 w-full bg-white dark:bg-neutral-900" 
                             type="text" onChange={setFormValue("username")} value={loginForm.username} maxLength="50"/>
                     </div>
-                    <div className="flex flex-col text-text py-2">
+                    <div className="flex flex-col text-neutral-900 dark:text-neutral-200 py-2">
                         <div className='relative'>
                             <label className='font-gothic font-medium mb-2'> Password: </label>
                             {loginError.password !== "" ? <label className='font-gothic font-medium absolute text-sm text-red-600 right-1 bottom-0' >{loginError.password}</label> : null}
                         </div>
                         <div className='relative'>
-                            <input className="border border-neutral-700 rounded-xl focus:bg-background mt-2 p-2 w-full" 
+                            <input className="border border-neutral-300 dark:border-neutral-700 rounded-xl mt-2 p-2 w-full bg-white dark:bg-neutral-900" 
                                 type={visible ? "text" : "password"} onChange={setFormValue("password")} value={loginForm.password}/> 
                             <div className='absolute top-1 right-1'>
                             {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6 pr-1' aria-hidden='true' /> : 
@@ -154,7 +154,7 @@ export default function Login() {
                             </div>
                         </div>
                     </div>
-                    <div className='flex justify-between text-text py-2'>
+                    <div className='flex justify-between text-neutral-900 dark:text-neutral-200 py-2'>
                         <p className='font-gothic font-medium flex items-center'><input className='mr-2' type='checkbox' onChange={() => setRememberMe(!rememberMe)} checked={rememberMe}/> Remember Me</p>
                         <p onClick={() => {navigate("recovery")}} className='ml-5 font-gothic font-medium hover:cursor-pointer hover:underline'>Forgot Password</p>
                     </div>
@@ -163,7 +163,7 @@ export default function Login() {
                             <p className='font-gothic font-demi text-xs text-center text-red-600'>{error}</p>: null
                         }
                     </div>
-                    <button className="font-gothic font-demi text-reverse-text w-full my-5 py-2 border rounded-xl bg-gradient-to-r from-accent-secondary/80 to-primary/80 hover:scale-105 hover:underline">
+                    <button className="font-gothic font-demi text-white w-full my-5 py-2 border rounded-xl bg-gradient-to-r from-brand-500 to-brand-700 dark:from-brand-400 dark:to-brand-600 hover:opacity-90 hover:underline">
                         {!!error ? "Try Again" : "Login"}
                     </button>
                     <p onClick={() => {navigate("/signup")}} className='font-gothic font-medium mb-2 text-sm text-center hover:cursor-pointer hover:underline'>
