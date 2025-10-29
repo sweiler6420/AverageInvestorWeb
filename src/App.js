@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom'
 
 import Layout from './components/Layout';
+import Research from './components/authenticated/Research';
 
 import RequireAuth from './components/RequireAuth';
 
@@ -9,7 +10,6 @@ import Home from './components/home/Home'
 import Login from './components/authenticate/Login'
 import Recovery from './components/authenticate/Recovery'
 import SignUp from './components/authenticate/SignUp'
-import ChartV2 from './components/authenticated/Chart2'
 
 const ROLES = {
   'User': 2001,
@@ -27,10 +27,12 @@ export default function App() {
         <Route path="signup" element={<SignUp/>} />
         <Route path="login" element={<Login/>} />
         <Route path="recovery" element={<Recovery/>} />
+        <Route path="research" element={<Research/>} />
+        {/* <Route path="stocks" element={<Stocks/>} /> */}
 
         {/* private routes */}
         <Route element={<RequireAuth allowedRoles={[ROLES.User]} />}>
-          <Route path="stocks" element={<ChartV2/>} />
+          {/* <Route path="stocks" element={<ChartV2/>} /> */}
         </Route>
 
         {/* catch all */}
