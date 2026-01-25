@@ -17,18 +17,24 @@ export default function Login() {
     const [response, setResponse] = useState("")
     const [rememberMe, setRememberMe] = useState(localStorage.rememberMe === 'true')
 
-    const { login } = useAuth();
+    const { setAuth } = useAuth();
     const {error} = useContext(ErrorsContext)
     const {apiLogin} = useApi()
     const navigate = useNavigate()
     const location = useLocation()
     const signUpData = location.state
 
-    const from = location.pathname === "/login" ? "/stocks" : location.state?.from?.pathname || "/stocks";
+    const from = location.pathname === "/login" ? "/research" : location.state?.from?.pathname || "/research";
     
 
     useEffect(() => {
         localStorage.setItem('rememberMe', rememberMe)
+        // Clear localStorage and form fields when rememberMe is unchecked
+        if (!rememberMe) {
+            localStorage.setItem('username', "")
+            localStorage.setItem('pass', "")
+            setLoginForm({ username: '', password: '' })
+        }
     }, [rememberMe])
 
 
@@ -44,7 +50,7 @@ export default function Login() {
 
 
     useEffect(()=> {
-        if (signUpData && signUpData.length !== 0 && (!!signUpData?.username || !!signUpData?.password)){
+        if (signUpData && (!!signUpData?.username || !!signUpData?.password)){
             setLoginForm(prevState => ({
                 ...prevState,
                 ["username"]: signUpData.username,
@@ -54,11 +60,19 @@ export default function Login() {
     }, [signUpData])
 
 
-    useEffect(()=> {
+    useEffect(() => {
         if (!!response && !!response?.access_token){
             const accessToken = response?.access_token
-            const roles = 2001
-            login(accessToken, roles)
+            const refreshToken = response?.refresh_token
+            const permission = "user"
+            
+            // Store refresh token in localStorage for persistence
+            if (refreshToken) {
+                localStorage.setItem('refresh_token', refreshToken);
+            }
+            
+            // Set auth state with new token structure
+            setAuth({ permission, accessToken, refreshToken })
 
             if(rememberMe){
                 localStorage.setItem("username", JSON.stringify(loginForm.username));
@@ -82,7 +96,7 @@ export default function Login() {
             };
     
             apiLogin(`v1/login`, payload).then(response => {
-                if(response?.status === 202){
+                if(response?.status === 200 || response?.status === 202){
                     setResponse(response?.data)
                 }
             })
@@ -147,16 +161,19 @@ export default function Login() {
                         </div>
                         <div className='relative'>
                             <input className="border border-neutral-300 dark:border-neutral-700 rounded-xl mt-2 p-2 w-full bg-white dark:bg-neutral-900" 
-                                type={visible ? "text" : "password"} onChange={setFormValue("password")} value={loginForm.password}/> 
+                                type={visible ? "text" : "password"} onChange={setFormValue("password")} value={loginForm.password} autoComplete={rememberMe ? "current-password" : "off"}/> 
                             <div className='absolute top-1 right-1'>
-                            {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6 pr-1' aria-hidden='true' /> : 
-                                    <EyeSlashIcon onClick={() => setVisible(true)} className='h-12 w-6 pr-1' aria-hidden='true' />}
+                            {visible ? <EyeIcon onClick={() => setVisible(false)} className='h-12 w-6 text-brand-600 dark:text-brand-400 pr-1' aria-hidden='true' /> : 
+                                    <EyeSlashIcon onClick={() => setVisible(true)} className='h-12 w-6 text-brand-600 dark:text-brand-400 pr-1' aria-hidden='true' />}
                             </div>
                         </div>
                     </div>
                     <div className='flex justify-between text-neutral-900 dark:text-neutral-200 py-2'>
-                        <p className='font-gothic font-medium flex items-center'><input className='mr-2' type='checkbox' onChange={() => setRememberMe(!rememberMe)} checked={rememberMe}/> Remember Me</p>
-                        <p onClick={() => {navigate("recovery")}} className='ml-5 font-gothic font-medium hover:cursor-pointer hover:underline'>Forgot Password</p>
+                        <label className='font-gothic font-medium flex items-center hover:cursor-pointer'>
+                            <input className='mr-2' type='checkbox' onChange={() => setRememberMe(!rememberMe)} checked={rememberMe}/>
+                            Remember Me
+                        </label>
+                        <p onClick={() => {navigate("/recovery")}} className='ml-5 font-gothic font-medium hover:cursor-pointer hover:underline'>Forgot Password</p>
                     </div>
                     <div className='relative'>
                         {!!error ?
