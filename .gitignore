@@ -48,8 +48,6 @@ alembic
 config.ini
 configs.ini
 
-*.json
-
 
 
 *.txt

@@ -1,16 +1,20 @@
 /** @type {import('tailwindcss').Config} */
+const colors = require('tailwindcss/colors')
+
 module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}"
   ],
   darkMode: "class",
   theme: {
-    // screens: {
-    //   sm: '480px',
-    //   md: '768px',
-    //   lg: '976px',
-    //   xl: '1440px',
-    // },
+    screens: {
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+      '3xl': '2000px'
+    },
     fontSize: {
       sm: '0.800rem',
       base: '1rem',
@@ -21,26 +25,22 @@ module.exports = {
       '5xl': '3.053rem',
     },
     fontFamily: {
-      heading: 'Poppins',
-      body: 'Poppins',
+      base: 'Poppins',
+      gothic: ['RTFont', 'Poppins', 'sans-serif'],
     },
     fontWeight: {
       normal: '400',
+      medium: '500',
+      demi: '600',
       bold: '700',
+      xl: '800',
     },
     
     extend: {
       colors: {
-        'text': 'var(--text)',
-        'reverse-text': 'var(--r-text)',
-        'background': 'var(--background)',
-        'background-sub': 'var(--background-sub)',
-        'background-sub-2': 'var(--background-sub-2)',
-        'background-acc': 'var(--background-accent)',
-        'primary': 'var(--primary)',
-        'secondary': 'var(--secondary)',
-        'green-acc': 'var(--g-accent)',
-        'red-acc': 'var(--r-accent)',
+        // Semantic brand aliases with full shade scales
+        brand: colors.cyan,
+        neutral: colors.slate,
        },
       boxShadow: {
         DEFAULT: '0 0 5px 0px rgba(0, 0, 0, 0.1)',
